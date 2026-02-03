@@ -1,0 +1,18 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+env/
+
+# Docker & Environment
+.env
+docker-compose.override.yml
+
+# IDE settings (VS Code, JetBrains)
+.vscode/
+.idea/
+
+# OS generated files
+.DS_Store
+Thumbs.db

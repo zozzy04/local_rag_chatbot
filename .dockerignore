@@ -1,0 +1,37 @@
+# File e cartelle generati da Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# File di ambiente virtuale
+venv/
+ENV/
+env/
+.venv/
+pip-selfcheck.json
+
+# File di configurazione specifici dell'ambiente locale
+.env
+*.env
+
+# File specifici di IDE e sistemi operativi
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+.DS_Store
+Thumbs.db
+*.bak
+
+# Log e file temporanei dell'applicazione
+*.log
+rag_uploads/
+
+# Docker
+Dockerfile
+docker-compose.yml # Se ne usi uno
+.dockerignore
+
+# Git
+.git/
+.gitignore
