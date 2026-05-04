@@ -1,0 +1,152 @@
+[
+    {
+        "id": 1,
+        "categoria": "Fattuale (Singola)",
+        "domanda": "Quali sono i cinque componenti principali di un sistema single-agent descritti in 'AI Agents in Action'?"
+    },
+    {
+        "id": 2,
+        "categoria": "Fattuale (Singola)",
+        "domanda": "Come viene definito il 'Serverless computing' nel libro 'AI as a Service'?"
+    },
+    {
+        "id": 3,
+        "categoria": "Fattuale (Singola)",
+        "domanda": "Qual è il costo mensile dell'abbonamento a ChatGPT Plus riportato nel libro sull'IT di tutti i giorni?"
+    },
+    {
+        "id": 4,
+        "categoria": "Fattuale (Singola)",
+        "domanda": "Quale servizio AWS nativo viene suggerito per trasformare il testo in un discorso realistico (Text-to-speech)?"
+    },
+    {
+        "id": 5,
+        "categoria": "Fattuale (Singola)",
+        "domanda": "Cos'è la 'Single Responsibility Principle' e come si applica all'architettura software e alle funzioni?"
+    },
+    {
+        "id": 6,
+        "categoria": "Fattuale (Singola)",
+        "domanda": "Cos'è 'AgentOps' e quale problema risolve quando si utilizzano framework come CrewAI?"
+    },
+    {
+        "id": 7,
+        "categoria": "Fattuale (Singola)",
+        "domanda": "Quali sono i quattro principi fondamentali per costruire un buon prompt?"
+    },
+    {
+        "id": 8,
+        "categoria": "Fattuale (Singola)",
+        "domanda": "A cosa serve il parametro 'temperature' quando si fa una richiesta di chat completion tramite le API di OpenAI?"
+    },
+    {
+        "id": 9,
+        "categoria": "Fattuale (Multi-chunk)",
+        "domanda": "Spiega il funzionamento e le differenze chiave tra i ruoli 'UserProxyAgent' e 'AssistantAgent' nel framework AutoGen."
+    },
+    {
+        "id": 10,
+        "categoria": "Fattuale (Multi-chunk)",
+        "domanda": "Descrivi il flusso di lavoro completo del 'crawler-service', dall'innesco iniziale tramite il messaggio SQS fino al salvataggio finale su S3."
+    },
+    {
+        "id": 11,
+        "categoria": "Fattuale (Multi-chunk)",
+        "domanda": "Spiega in dettaglio la differenza tra 'zero-shot', 'single-shot', 'few-shot' e 'many-shot prompting' con i relativi casi d'uso."
+    },
+    {
+        "id": 12,
+        "categoria": "Fattuale (Multi-chunk)",
+        "domanda": "Come funziona l'elaborazione 'sequenziale' rispetto a quella 'gerarchica' (con un manager LLM) in CrewAI e quali impatti ha sui costi?"
+    },
+    {
+        "id": 13,
+        "categoria": "Fattuale (Multi-chunk)",
+        "domanda": "Quali sono le considerazioni chiave, i rischi etici e le pratiche di sicurezza per l'anonimizzazione dei dati quando si usano servizi AI in ambito aziendale?"
+    },
+    {
+        "id": 14,
+        "categoria": "Fattuale (Multi-chunk)",
+        "domanda": "Nel progetto serverless per il riconoscimento delle immagini, come avviene esattamente la comunicazione e il passaggio dei dati tra i servizi sincroni e quelli asincroni?"
+    },
+    {
+        "id": 15,
+        "categoria": "Multi-hop",
+        "domanda": "In che modo l'uso di 'Cloud native services' (come descritto in 'AI as a Service') può facilitare o migliorare l'implementazione dei 'tools' per le azioni degli agenti (descritti in 'AI Agents in Action')?"
+    },
+    {
+        "id": 16,
+        "categoria": "Multi-hop",
+        "domanda": "Metti in relazione il limite e il costo dei 'token' spiegati in 'AI for Everyday IT' con le strategie pratiche per ridurre l'utilizzo dei token (es. caching o AgentOps) descritte per i sistemi multi-agente in 'AI Agents in Action'."
+    },
+    {
+        "id": 17,
+        "categoria": "Multi-hop",
+        "domanda": "Se volessi automatizzare completamente la manutenzione di un database, come potrei combinare le tecniche di 'prompting' per DBA mostrate in 'AI for Everyday IT' con l'uso di un agente 'UserProxy' in AutoGen spiegato in 'AI Agents in Action'?"
+    },
+    {
+        "id": 18,
+        "categoria": "Multi-hop",
+        "domanda": "Confronta i pro e i contro di usare un servizio gestito come 'Amazon Rekognition' rispetto a fornire a un agente una skill 'describe_image' che chiama le API di GPT-4 Vision."
+    },
+    {
+        "id": 19,
+        "categoria": "Sintesi/Confronto",
+        "domanda": "Quali sono le principali differenze pratiche ed economiche nell'uso dei modelli AI commerciali tramite API rispetto ai modelli open source eseguiti localmente tramite LM Studio?"
+    },
+    {
+        "id": 20,
+        "categoria": "Sintesi/Confronto",
+        "domanda": "Sintetizza l'evoluzione dell'architettura software: dalle applicazioni monolitiche ('AI as a Service') ai moderni sistemi conversazionali autonomi basati su agenti ('AI Agents in Action')."
+    },
+    {
+        "id": 21,
+        "categoria": "Sintesi/Confronto",
+        "domanda": "Confronta gli stili di scrittura, le limitazioni tecniche e le capacità analitiche dei modelli Anthropic Claude, OpenAI ChatGPT e Google Gemini in un contesto lavorativo."
+    },
+    {
+        "id": 22,
+        "categoria": "Out-of-scope",
+        "domanda": "Qual è la procedura esatta per configurare una VPN site-to-site con IPsec su un router Cisco aziendale?"
+    },
+    {
+        "id": 23,
+        "categoria": "Out-of-scope",
+        "domanda": "Quanti grammi di farina e di zucchero servono per preparare una torta di mele soffice?"
+    },
+    {
+        "id": 24,
+        "categoria": "Out-of-scope",
+        "domanda": "Quale squadra di calcio ha vinto l'ultima edizione della UEFA Champions League?"
+    },
+    {
+        "id": 25,
+        "categoria": "Out-of-scope (Subdola)",
+        "domanda": "In che modo si utilizza la funzione di 'reinforcement learning' integrata nel 'crawler-service' di AWS Lambda per ottimizzare automaticamente le tabelle di DynamoDB?"
+    },
+    {
+        "id": 26,
+        "categoria": "Out-of-scope (Subdola)",
+        "domanda": "Qual è il comando esatto in PowerShell per istruire l'agente 'UserProxy' di AutoGen a eseguire in autonomia una migrazione da Oracle 19c a 23ai in meno di due ore?"
+    },
+    {
+        "id": 27,
+        "categoria": "Ambigua",
+        "domanda": "Che cos'è esattamente un token e qual è il suo limite massimo?"
+    },
+    {
+        "id": 28,
+        "categoria": "Ambigua",
+        "domanda": "Come si implementa l'architettura migliore per risolvere problemi di scalabilità?"
+    },
+    {
+        "id": 29,
+        "categoria": "Edge case",
+        "domanda": "Facendo riferimento all'esempio della configurazione YAML del servizio asincrono, qual è la stringa esatta della proprietà `Action` nel file `serverless.yml` per consentire al crawler di scrivere oggetti nel bucket S3?"
+    },
+    {
+        "id": 30,
+        "categoria": "Edge case",
+        "domanda": "Secondo la tabella comparativa dei limiti dei token fornita nel testo, qual è esattamente il limite massimo di token in output supportato dal modello 'OpenAI o3-mini'?"
+    }
+]
