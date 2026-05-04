@@ -1,11 +1,14 @@
 import os
 import glob
-from datetime import datetime
-from typing import Optional
+import logging
+
+from contextlib import asynccontextmanager
 
 # Importa le librerie per l'API web
-from fastapi import FastAPI, Form, HTTPException
+from fastapi import FastAPI, Form, HTTPException, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
+
+from dotenv import load_dotenv
 
 # Importa le librerie per la logica RAG e AI (LangChain)
 from langchain_ollama import OllamaLLM, OllamaEmbeddings
@@ -15,18 +18,26 @@ from langchain_core.prompts import PromptTemplate
 from langchain_qdrant import QdrantVectorStore
 import qdrant_client
 
+# --- CONFIGURAZIONE LOGGER ---
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s [%(levelname)s] %(message)s',
+    datefmt='%Y-%m-%d %H:%M:%S'
+)
+logger = logging.getLogger(__name__)
+
 # --- CONFIGURAZIONE ---
-# Definisce gli indirizzi dei servizi Docker (Ollama per l'AI, Qdrant per il DB)
-OLLAMA_HOST = "http://ollama:11434"
-QDRANT_HOST = "http://qdrant:6333"
 
-# Seleziona i modelli da utilizzare (Mistral per il testo, Nomic per i vettori)
-OLLAMA_MODEL = "mistral"
-EMBEDDING_MODEL = "nomic-embed-text"
-COLLECTION_NAME = "default_collection"
+# Caricamento file .env e uso di os.getenv()
+# Invece di scrivere i parametri fissi nel codice, li legge dall'ambiente.
+load_dotenv() 
 
-# Definisce la cartella dove il sistema cercherà i PDF
-SOURCE_DIR = "/app/documenti_da_indicizzare"
+OLLAMA_HOST = os.getenv("OLLAMA_HOST", "http://ollama:11434")
+QDRANT_HOST = os.getenv("QDRANT_HOST", "http://qdrant:6333")
+OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "mistral")
+EMBEDDING_MODEL = os.getenv("EMBEDDING_MODEL", "nomic-embed-text")
+COLLECTION_NAME = os.getenv("COLLECTION_NAME", "default_collection")
+SOURCE_DIR = os.getenv("SOURCE_DIR", "/app/documenti_da_indicizzare")
 
 # Definisce le strategie di chunking per sperimentare diverse granularità
 CHUNK_PRESETS = {
@@ -34,12 +45,6 @@ CHUNK_PRESETS = {
     "MEDIUM": {"size": 1000, "overlap": 200},  # Bilanciamento standard
     "LARGE": {"size": 2000, "overlap": 300}    # Chunk grandi per contesti ampi
 }
-
-# Inizializza l'applicazione FastAPI
-app = FastAPI()
-
-# Abilita CORS per permettere chiamate da frontend esterni (se necessari)
-app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
 
 # Dizionario in memoria per tenere traccia dello stato delle collezioni attive
 active_collections = {}
@@ -60,20 +65,14 @@ def log_to_terminal(question: str, answer: str, confidenza: str, sources: list):
     Stampa nel terminale del server un log dettagliato dell'interazione.
     Utile per il debug e per mostrare il funzionamento "dietro le quinte" durante la demo.
     """
-    now = datetime.now().strftime("%H:%M:%S")
-    print("\n" + "="*60)
-    print(f"ORARIO: {now}")
-    print("-" * 60)
-    print(f"DOMANDA: {question}")
-    print("-" * 60)
     preview = answer[:300].replace('\n', ' ') + "..." if len(answer) > 300 else answer
-    print(f"RISPOSTA AI: {preview}")
-    print("-" * 60)
-    print(f"CONFIDENZA: {confidenza}")
-    print("FONTI UTILIZZATE:")
+    
+    logger.info(f"RAG DOMANDA: {question}")
+    logger.info(f"RAG RISPOSTA AI: {preview}")
+    logger.info(f"RAG CONFIDENZA: {confidenza}")
+    
     for src in sources:
-        print(f"   * [Score: {src['score']}] {src['file']} (Pag. {src['pag']})")
-    print("="*60 + "\n")
+        logger.info(f"RAG FONTE UTILIZZATA - [Score: {src['score']}] {src['file']} (Pag. {src['pag']})")
 
 def ingest_local_documents(strategy: str = "MEDIUM"):
     """
@@ -96,9 +95,8 @@ def ingest_local_documents(strategy: str = "MEDIUM"):
         if exists:
             # Se la collezione esiste, evita di rifare il lavoro (Logica di Caching)
             count_info = client.count(collection_name=COLLECTION_NAME)
-            print(f"\n💾 CACHE TROVATA: Collezione '{COLLECTION_NAME}'")
-            print(f"   ↳ Totale Chunk nel DB: {count_info.count}")
-            print(f"   ↳ Salto l'ingestion per risparmiare tempo e risorse.\n")
+            logger.info(f"CACHE TROVATA: Collezione '{COLLECTION_NAME}' con {count_info.count} chunk nel DB.")
+            logger.info("Salto l'ingestion per risparmiare tempo e risorse.")
             
             vector_store = QdrantVectorStore(
                 client=client,
@@ -112,7 +110,7 @@ def ingest_local_documents(strategy: str = "MEDIUM"):
             }
             return
     except Exception as e:
-        print(f"⚠️ Errore controllo cache: {e}. Procedo con ingestion completa.")
+        logger.warning(f"Errore controllo cache: {e}. Procedo con ingestion completa.")
 
     # 2. Ingestion Reale (Se la cache non esiste)
     if not os.path.exists(SOURCE_DIR):
@@ -122,17 +120,14 @@ def ingest_local_documents(strategy: str = "MEDIUM"):
     # Cerca tutti i file PDF nella directory specificata
     pdf_files = glob.glob(os.path.join(SOURCE_DIR, "*.pdf"))
     if not pdf_files:
-        print("Nessun PDF trovato nella cartella locale.")
+        logger.warning("Nessun PDF trovato nella cartella locale.")
         return
 
     # Recupera i parametri di configurazione per il chunking
     config = CHUNK_PRESETS[strategy]
     all_chunks = []
     
-    print("\n" + "="*60)
-    print(f"⚙️  INIZIO INGESTION (Strategia: {strategy})")
-    print(f"   ↳ Parametri: Chunk Size {config['size']} | Overlap {config['overlap']}")
-    print("-" * 60)
+    logger.info(f"INIZIO INGESTION (Strategia: {strategy}) - Parametri: Chunk Size {config['size']} | Overlap {config['overlap']}")
     
     for i, pdf_path in enumerate(pdf_files, 1):
         try:
@@ -153,19 +148,15 @@ def ingest_local_documents(strategy: str = "MEDIUM"):
             # Calcola statistiche per monitorare la qualità del chunking
             avg_chunk_size = sum(len(c.page_content) for c in chunks) / len(chunks) if chunks else 0
             
-            print(f"📄 [{i}/{len(pdf_files)}] {filename}")
-            print(f"   ↳ Pagine PDF: {len(pages)}")
-            print(f"   ↳ Chunk Generati: {len(chunks)}")
-            print(f"   ↳ Dimensione Media Chunk: {int(avg_chunk_size)} caratteri")
-            print("-" * 30)
+            logger.info(f"Elaborato file [{i}/{len(pdf_files)}] {filename} | Pagine: {len(pages)} | Chunk Generati: {len(chunks)} | Dim. Media: {int(avg_chunk_size)} caratteri")
 
             all_chunks.extend(chunks)
             
         except Exception as e:
-            print(f"❌ Errore su {pdf_path}: {e}")
+            logger.error(f"Errore su {pdf_path}: {e}")
 
     # 3. Creazione Embeddings e Salvataggio (Vector Store)
-    print(f"📝 Creazione Embeddings e Salvataggio in Qdrant...")
+    logger.info("Creazione Embeddings e Salvataggio in Qdrant in corso...")
     if all_chunks:
         # Converte il testo in vettori e li carica su Qdrant
         vector_store = QdrantVectorStore.from_documents(
@@ -179,18 +170,35 @@ def ingest_local_documents(strategy: str = "MEDIUM"):
             "vector_store": vector_store,
             "strategy": strategy
         }
-        print(f"🚀 SISTEMA PRONTO! Totale {len(all_chunks)} chunk indicizzati.")
-    print("="*60 + "\n")
+        logger.info(f"SISTEMA PRONTO! Totale {len(all_chunks)} chunk indicizzati.")
+
+
+# --- GESTIONE AVVIO E APP FASTAPI ---
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    logger.info("Inizializzazione del sistema RAG...")
+    ingest_local_documents() # Esegue il controllo/caricamento iniziale
+    yield # Qui il server accetta le richieste
+    logger.info("Chiusura del server in corso. Pulizia risorse...")
+
+# Passiamo il lifespan durante la creazione dell'app
+app = FastAPI(lifespan=lifespan)
+
+app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
+
 
 # --- ENDPOINT API ---
 
-@app.on_event("startup")
-async def startup_event():
+@app.post("/reindex")
+async def trigger_reindex(background_tasks: BackgroundTasks):
     """
-    Evento eseguito automaticamente all'avvio del server.
-    Avvia l'indicizzazione dei documenti in background per rendere il sistema pronto.
+    Permette di caricare nuovi PDF a server già avviato. 
+    Usa un BackgroundTask per non bloccare le altre chiamate web durante l'elaborazione.
     """
-    ingest_local_documents()
+    logger.info("Avvio re-indicizzazione in background...")
+    background_tasks.add_task(ingest_local_documents)
+    return {"status": "ok", "dettaglio": "Re-indicizzazione avviata in background."}
 
 @app.post("/ask")
 async def ask(question: str = Form(...)):
@@ -237,7 +245,7 @@ async def ask(question: str = Form(...)):
         clean_filename = os.path.basename(full_path) 
         sources.append({
             "file": clean_filename,
-            "pag": doc.metadata.get("page", 0) + 1, # Aggiunge 1 perché i computer contano da 0
+            "pag": doc.metadata.get("page", 0) + 1,
             "score": round(score, 3),
             "estratto": doc.page_content[:150].replace("\n", " ") + "..."
         })
