@@ -8,9 +8,9 @@ services:
       - .:/app                      # Hot-reload del codice
       - ./documenti_da_indicizzare:/app/documenti_da_indicizzare # PDF
     environment:
-      - OLLAMA_HOST_APP=http://ollama:11434
-      - QDRANT_HOST_APP=http://qdrant:6333
-    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+      - OLLAMA_HOST=http://ollama:11434
+      - QDRANT_HOST=http://qdrant:6333
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
     depends_on:
       - qdrant
       - ollama
