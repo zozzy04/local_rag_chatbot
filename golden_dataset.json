@@ -2,151 +2,206 @@
     {
         "id": 1,
         "categoria": "Fattuale (Singola)",
-        "domanda": "Quali sono i cinque componenti principali di un sistema single-agent descritti in 'AI Agents in Action'?"
+        "domanda": "Quali sono i cinque componenti principali di un sistema single-agent descritti in 'AI Agents in Action'?",
+        "expected_file": "AI_Agents_in_Action.pdf",
+        "ground_truth": "I cinque componenti principali sono: Profile and Persona (Profilo e Persona), Actions and Tool Use (Azioni e uso di strumenti), Memory and Knowledge (Memoria e conoscenza), Reasoning and Evaluation (Ragionamento e valutazione), Planning and Feedback (Pianificazione e feedback)."
     },
     {
         "id": 2,
         "categoria": "Fattuale (Singola)",
-        "domanda": "Come viene definito il 'Serverless computing' nel libro 'AI as a Service'?"
+        "domanda": "Come viene definito il 'Serverless computing' nel libro 'AI as a Service'?",
+        "expected_file": "AI_as_a_Service.pdf",
+        "ground_truth": "Il Serverless computing è definito come una forma di 'cloud utility computing' in cui il provider cloud gestisce dinamicamente le risorse sottostanti per l'utente. Offre un livello di astrazione sull'infrastruttura, rimuovendo per l'utente finale l'onere della gestione di server e container, che vengono sostituiti da funzioni gestite dal provider (FaaS)."
     },
     {
         "id": 3,
         "categoria": "Fattuale (Singola)",
-        "domanda": "Qual è il costo mensile dell'abbonamento a ChatGPT Plus riportato nel libro sull'IT di tutti i giorni?"
+        "domanda": "Qual è il costo mensile dell'abbonamento a ChatGPT Plus riportato nel libro sull'IT di tutti i giorni?",
+        "expected_file": "AI_for_Everyday_IT.pdf",
+        "ground_truth": "Il costo mensile dell'abbonamento a ChatGPT Plus riportato nel libro è di 20$."
     },
     {
         "id": 4,
         "categoria": "Fattuale (Singola)",
-        "domanda": "Quale servizio AWS nativo viene suggerito per trasformare il testo in un discorso realistico (Text-to-speech)?"
+        "domanda": "Quale servizio AWS nativo viene suggerito per trasformare il testo in un discorso realistico (Text-to-speech)?",
+        "expected_file": "AI_as_a_Service.pdf",
+        "ground_truth": "Il servizio AWS nativo suggerito per il Text-to-speech è AWS Polly."
     },
     {
         "id": 5,
         "categoria": "Fattuale (Singola)",
-        "domanda": "Cos'è la 'Single Responsibility Principle' e come si applica all'architettura software e alle funzioni?"
+        "domanda": "Cos'è la 'Single Responsibility Principle' e come si applica all'architettura software e alle funzioni?",
+        "expected_file": "AI_as_a_Service.pdf",
+        "ground_truth": "La Single Responsibility Principle (SRP) è l'idea di scrivere programmi o moduli con un unico focus. A livello architettonico, significa che ogni servizio deve avere un solo scopo. A livello di implementazione, ogni funzione deve avere un solo scopo. Infine, a livello di 'linea di codice', ogni riga di codice deve eseguire una sola singola operazione."
     },
     {
         "id": 6,
         "categoria": "Fattuale (Singola)",
-        "domanda": "Cos'è 'AgentOps' e quale problema risolve quando si utilizzano framework come CrewAI?"
+        "domanda": "Cos'è 'AgentOps' e quale problema risolve quando si utilizzano framework come CrewAI?",
+        "expected_file": "AI_Agents_in_Action.pdf",
+        "ground_truth": "AgentOps è una piattaforma di osservabilità (observability) specifica per applicazioni AI basate su LLM. Risolve il problema di monitorare sistemi complessi multi-agente permettendo di tracciare le tempistiche delle chiamate LLM, i token dei prompt e dei completamenti, e i costi totali, consentendo di individuare inefficienze come i loop costosi (ripetizione degli stessi pensieri)."
     },
     {
         "id": 7,
         "categoria": "Fattuale (Singola)",
-        "domanda": "Quali sono i quattro principi fondamentali per costruire un buon prompt?"
+        "domanda": "Quali sono i quattro principi fondamentali per costruire un buon prompt?",
+        "expected_file": "AI_for_Everyday_IT.pdf",
+        "ground_truth": "I quattro principi fondamentali per costruire un buon prompt sono: chiarezza (clarity), concisione (conciseness), pertinenza (relevance) e specificità (specificity)."
     },
     {
         "id": 8,
         "categoria": "Fattuale (Singola)",
-        "domanda": "A cosa serve il parametro 'temperature' quando si fa una richiesta di chat completion tramite le API di OpenAI?"
+        "domanda": "A cosa serve il parametro 'temperature' quando si fa una richiesta di chat completion tramite le API di OpenAI?",
+        "expected_file": "AI_Agents_in_Action.pdf",
+        "ground_truth": "Il parametro 'temperature' controlla la variabilità o la natura stocastica (casualità) delle risposte generate dal modello. Abbassando il valore (es. a 0) si ottengono risultati coerenti e meno casuali, mentre alzandolo (es. a 1.0) si favorisce una maggiore variazione e creatività nelle risposte."
     },
     {
         "id": 9,
         "categoria": "Fattuale (Multi-chunk)",
-        "domanda": "Spiega il funzionamento e le differenze chiave tra i ruoli 'UserProxyAgent' e 'AssistantAgent' nel framework AutoGen."
+        "domanda": "Spiega il funzionamento e le differenze chiave tra i ruoli 'UserProxyAgent' e 'AssistantAgent' nel framework AutoGen.",
+        "expected_file": "AI_Agents_in_Action.pdf",
+        "ground_truth": "In AutoGen, il 'UserProxyAgent' funge da proxy per l'essere umano: riceve le direttive, può richiedere feedback umano ed è in grado di eseguire automaticamente snippet di codice per conto dell'utente. L''AssistantAgent', invece, interagisce direttamente con l'LLM, interpreta i compiti, pianifica le azioni e scrive il codice (ma di default non lo esegue) in risposta alle richieste del proxy."
     },
     {
         "id": 10,
         "categoria": "Fattuale (Multi-chunk)",
-        "domanda": "Descrivi il flusso di lavoro completo del 'crawler-service', dall'innesco iniziale tramite il messaggio SQS fino al salvataggio finale su S3."
+        "domanda": "Descrivi il flusso di lavoro completo del 'crawler-service', dall'innesco iniziale tramite il messaggio SQS fino al salvataggio finale su S3.",
+        "expected_file": "AI_as_a_Service.pdf",
+        "ground_truth": "Il 'crawler-service' viene invocato quando un messaggio JSON (contenente un URL) viene inserito nella coda SQS 'crawler queue'. La funzione Lambda recupera il codice HTML della pagina a quell'URL, analizza i tag immagine inline ed estrae gli attributi source. Successivamente scarica ciascuna immagine e la salva in un apposito bucket S3. Infine, posta un messaggio di tipo 'analyze' nella coda SQS dedicata all'analisi."
     },
     {
         "id": 11,
         "categoria": "Fattuale (Multi-chunk)",
-        "domanda": "Spiega in dettaglio la differenza tra 'zero-shot', 'single-shot', 'few-shot' e 'many-shot prompting' con i relativi casi d'uso."
+        "domanda": "Spiega in dettaglio la differenza tra 'zero-shot', 'single-shot', 'few-shot' e 'many-shot prompting' con i relativi casi d'uso.",
+        "expected_file": "AI_for_Everyday_IT.pdf",
+        "ground_truth": "Zero-shot non fornisce alcun esempio e si affida alla conoscenza innata dell'IA (utile per compiti base/domande fattuali). Single-shot fornisce esattamente un esempio, utile per stabilire lo stile, il formato o la tecnica desiderata (es. generare un'immagine in uno stile specifico). Few-shot offre una piccola serie di esempi (es. 3-4) per stabilire pattern complessi, agendo come una sorta di addestramento temporaneo su variazioni e sfumature. Many-shot fornisce decine di esempi, usato in scenari complessi come la scienza dei dati o l'istruzione di help desk, per definire chiaramente i comportamenti di fronte a molti casi limite."
     },
     {
         "id": 12,
         "categoria": "Fattuale (Multi-chunk)",
-        "domanda": "Come funziona l'elaborazione 'sequenziale' rispetto a quella 'gerarchica' (con un manager LLM) in CrewAI e quali impatti ha sui costi?"
+        "domanda": "Come funziona l'elaborazione 'sequenziale' rispetto a quella 'gerarchica' (con un manager LLM) in CrewAI e quali impatti ha sui costi?",
+        "expected_file": "AI_Agents_in_Action.pdf",
+        "ground_truth": "Nell'elaborazione sequenziale, l'esecuzione passa da un agente all'altro e da un task all'altro in ordine consecutivo prestabilito. L'elaborazione gerarchica introduce un 'manager_llm' (agente supervisore) che coordina le risposte, alloca i task e controlla il flusso in maniera dinamica. Dal punto di vista economico, l'uso di un manager gerarchico aumenta significativamente il numero di token consumati (i costi spesso raddoppiano) a causa delle interazioni più verbali e dei loop conversazionali di controllo."
     },
     {
         "id": 13,
         "categoria": "Fattuale (Multi-chunk)",
-        "domanda": "Quali sono le considerazioni chiave, i rischi etici e le pratiche di sicurezza per l'anonimizzazione dei dati quando si usano servizi AI in ambito aziendale?"
+        "domanda": "Quali sono le considerazioni chiave, i rischi etici e le pratiche di sicurezza per l'anonimizzazione dei dati quando si usano servizi AI in ambito aziendale?",
+        "expected_file": "AI_for_Everyday_IT.pdf",
+        "ground_truth": "I rischi chiave includono l'esposizione di dati sensibili poiché vengono elaborati su cloud esterni e la possibilità di re-identificare i dati se l'anonimizzazione non è perfetta. Le pratiche di sicurezza raccomandano di usare solo strumenti enterprise approvati (es. Azure OpenAI, AWS Bedrock) per evitare il riaddestramento dei modelli sui propri dati e di NON usare tool gratuiti o consumer per informazioni regolamentate (HIPAA, GDPR). È sempre essenziale istruire chiaramente l'IA su come agire e mantenere la supervisione umana per verificare eventuali omissioni."
     },
     {
         "id": 14,
         "categoria": "Fattuale (Multi-chunk)",
-        "domanda": "Nel progetto serverless per il riconoscimento delle immagini, come avviene esattamente la comunicazione e il passaggio dei dati tra i servizi sincroni e quelli asincroni?"
+        "domanda": "Nel progetto serverless per il riconoscimento delle immagini, come avviene esattamente la comunicazione e il passaggio dei dati tra i servizi sincroni e quelli asincroni?",
+        "expected_file": "AI_as_a_Service.pdf",
+        "ground_truth": "La comunicazione avviene attraverso il Simple Queue Service (SQS) utilizzando messaggi asincroni in formato JSON. Un servizio sincrono (ad esempio esposto tramite un endpoint API Gateway come /url/analyze) elabora la richiesta HTTP POST dell'utente, costruisce un payload JSON e lo inserisce nella coda SQS. Da lì, il messaggio JSON funge da trigger asincrono per invocare le funzioni Lambda in background (es. crawler-service o analysis-service)."
     },
     {
         "id": 15,
         "categoria": "Multi-hop",
-        "domanda": "In che modo l'uso di 'Cloud native services' (come descritto in 'AI as a Service') può facilitare o migliorare l'implementazione dei 'tools' per le azioni degli agenti (descritti in 'AI Agents in Action')?"
+        "domanda": "In che modo l'uso di 'Cloud native services' (come descritto in 'AI as a Service') può facilitare o migliorare l'implementazione dei 'tools' per le azioni degli agenti (descritti in 'AI Agents in Action')?",
+        "expected_file": "AI_as_a_Service.pdf, AI_Agents_in_Action.pdf",
+        "ground_truth": "I servizi cloud-native e serverless (es. AWS Lambda e API Gateway visti in 'AI as a Service') consentono di creare backend ed endpoint robusti, manutenuti dinamicamente dal provider cloud ed elastici. Questi endpoint possono essere messi a disposizione dei sistemi multi-agente ('AI Agents in Action') come 'azioni personalizzate' o API esterne. Un agente, tramite la documentazione OpenAPI del servizio, può quindi invocare una funzione scalabile in cloud (come il calcolo dei task o il controllo del meteo) senza bisogno che lo sviluppatore debba configurare e mantenere server dedicati ai tool dell'agente."
     },
     {
         "id": 16,
         "categoria": "Multi-hop",
-        "domanda": "Metti in relazione il limite e il costo dei 'token' spiegati in 'AI for Everyday IT' con le strategie pratiche per ridurre l'utilizzo dei token (es. caching o AgentOps) descritte per i sistemi multi-agente in 'AI Agents in Action'."
+        "domanda": "Metti in relazione il limite e il costo dei 'token' spiegati in 'AI for Everyday IT' con le strategie pratiche per ridurre l'utilizzo dei token (es. caching o AgentOps) descritte per i sistemi multi-agente in 'AI Agents in Action'.",
+        "expected_file": "AI_for_Everyday_IT.pdf, AI_Agents_in_Action.pdf",
+        "ground_truth": "Nel testo 'AI for Everyday IT' viene spiegato che i token limitano l'input/output che i modelli possono elaborare e si traducono direttamente in costi. Nel libro 'AI Agents in Action' viene mostrato come i sistemi multi-agente generino un uso intensivo e a volte ridondante di token a causa dei loop conversazionali ('group chat' tra agenti). Per abbattere i costi e restare nei limiti, si usano strategie di 'caching' (come il database SQLite usato in AutoGen per ripristinare uno stato senza rieseguire le chiamate LLM) e strumenti di monitoraggio come AgentOps per rilevare loop improduttivi ('repeat thoughts') e bloccare iterazioni costose."
     },
     {
         "id": 17,
         "categoria": "Multi-hop",
-        "domanda": "Se volessi automatizzare completamente la manutenzione di un database, come potrei combinare le tecniche di 'prompting' per DBA mostrate in 'AI for Everyday IT' con l'uso di un agente 'UserProxy' in AutoGen spiegato in 'AI Agents in Action'?"
+        "domanda": "Se volessi automatizzare completamente la manutenzione di un database, come potrei combinare le tecniche di 'prompting' per DBA mostrate in 'AI for Everyday IT' con l'uso di un agente 'UserProxy' in AutoGen spiegato in 'AI Agents in Action'?",
+        "expected_file": "AI_for_Everyday_IT.pdf, AI_Agents_in_Action.pdf",
+        "ground_truth": "È possibile utilizzare le tecniche esperte di 'problem formulation' e prompting illustrate per i DBA in 'AI for Everyday IT' (ad es. per aggiornamento statistiche o migrazioni da Oracle) per configurare precisamente la 'Persona' e le istruzioni di sistema di un AssistantAgent in AutoGen. A quel punto, l'AssistantAgent genererà il codice di automazione (es. in Python o SQL) e il 'UserProxy', discusso in 'AI Agents in Action', si occuperà di eseguirlo in modo isolato, restituendo all'assistente i log e l'output della manutenzione in modo autonomo e iterativo fino al completamento."
     },
     {
         "id": 18,
         "categoria": "Multi-hop",
-        "domanda": "Confronta i pro e i contro di usare un servizio gestito come 'Amazon Rekognition' rispetto a fornire a un agente una skill 'describe_image' che chiama le API di GPT-4 Vision."
+        "domanda": "Confronta i pro e i contro di usare un servizio gestito come 'Amazon Rekognition' rispetto a fornire a un agente una skill 'describe_image' che chiama le API di GPT-4 Vision.",
+        "expected_file": "AI_as_a_Service.pdf, AI_Agents_in_Action.pdf",
+        "ground_truth": "Amazon Rekognition è un servizio serverless gestito, ottimizzato per pipeline automatizzate di massa: restituisce rapidamente etichette strutturate con valori di confidenza (JSON), ideali per data science e stoccaggio in DB. La funzione 'describe_image' con GPT-4 Vision integrata come skill per un agente AI è molto più descrittiva, colloquiale e contestualmente avanzata (può leggere testi scritti a mano o tradurre iscrizioni latine), ma è generalmente meno rigida nella struttura, consuma token (generando costi variabili in base alla risposta) ed è pensata per interazioni conversazionali."
     },
     {
         "id": 19,
         "categoria": "Sintesi/Confronto",
-        "domanda": "Quali sono le principali differenze pratiche ed economiche nell'uso dei modelli AI commerciali tramite API rispetto ai modelli open source eseguiti localmente tramite LM Studio?"
+        "domanda": "Quali sono le principali differenze pratiche ed economiche nell'uso dei modelli AI commerciali tramite API rispetto ai modelli open source eseguiti localmente tramite LM Studio?",
+        "expected_file": "AI_Agents_in_Action.pdf, AI_for_Everyday_IT.pdf",
+        "ground_truth": "I modelli commerciali (come OpenAI GPT-4 o Anthropic Claude) non richiedono installazioni hardware locali e offrono enormi finestre di contesto e capacità analitiche superiori; tuttavia, implicano un costo economico per-token (spesso ad abbonamento/consumo) e sollevano preoccupazioni di privacy aziendale poiché i dati vengono inviati su cloud esterni. I modelli open source (eseguiti in locale su LM Studio) risolvono i problemi di privacy dei dati e azzerano i costi di chiamata API, ma richiedono la disponibilità di hardware potente (GPU) per gestire il caricamento e spesso presentano capacità di ragionamento inferiori a contesti massivi."
     },
     {
         "id": 20,
         "categoria": "Sintesi/Confronto",
-        "domanda": "Sintetizza l'evoluzione dell'architettura software: dalle applicazioni monolitiche ('AI as a Service') ai moderni sistemi conversazionali autonomi basati su agenti ('AI Agents in Action')."
+        "domanda": "Sintetizza l'evoluzione dell'architettura software: dalle applicazioni monolitiche ('AI as a Service') ai moderni sistemi conversazionali autonomi basati su agenti ('AI Agents in Action').",
+        "expected_file": "AI_as_a_Service.pdf, AI_Agents_in_Action.pdf",
+        "ground_truth": "Le architetture software sono evolute da colossali applicazioni monolitiche (anni '80/'90, aggiornate raramente) a modelli agili orientati ai servizi (SOA e microservizi). Con il cloud, si è giunti al 'Serverless' o FaaS, in cui i provider gestiscono le infrastrutture mentre i dev si concentrano su funzioni cloud-native isolate. L'ultimo step descritto è l'architettura Agentica: gli LLM sono usati per alimentare agenti (come proxy e collaboratori in auto-generazione) che conversano tra loro, valutano lo stato e, integrandosi nativamente con i microservizi o gli endpoint serverless, eseguono autonomamente piani di azione completi."
     },
     {
         "id": 21,
         "categoria": "Sintesi/Confronto",
-        "domanda": "Confronta gli stili di scrittura, le limitazioni tecniche e le capacità analitiche dei modelli Anthropic Claude, OpenAI ChatGPT e Google Gemini in un contesto lavorativo."
+        "domanda": "Confronta gli stili di scrittura, le limitazioni tecniche e le capacità analitiche dei modelli Anthropic Claude, OpenAI ChatGPT e Google Gemini in un contesto lavorativo.",
+        "expected_file": "AI_for_Everyday_IT.pdf",
+        "ground_truth": "ChatGPT è considerato un 'tuttofare' versatile: ha una generazione e analisi di immagini superiori, supporto per la voce ed è eccellente per ricerca web; la sua scrittura può tuttavia risultare più generica. Anthropic Claude spicca per ragionamento profondo, coerenza di contesto nei documenti lunghi, programmazione/architettura software e adattamento stilistico naturale (può mantenere stili come Concise, Explanatory o Formal); tuttavia manca di generazione nativa di immagini. Google Gemini integra elaborazione simultanea di immagini, testo, video e ricerca (ed ecosistema Google Workspace), ma può soffrire di cali di prestazioni o 'rifiuti' incoerenti sulle proprie capacità, risultando a volte frustrante in produzione."
     },
     {
         "id": 22,
         "categoria": "Out-of-scope",
-        "domanda": "Qual è la procedura esatta per configurare una VPN site-to-site con IPsec su un router Cisco aziendale?"
+        "domanda": "Qual è la procedura esatta per configurare una VPN site-to-site con IPsec su un router Cisco aziendale?",
+        "ground_truth": "Informazione non presente nei testi di riferimento."
     },
     {
         "id": 23,
         "categoria": "Out-of-scope",
-        "domanda": "Quanti grammi di farina e di zucchero servono per preparare una torta di mele soffice?"
+        "domanda": "Quanti grammi di farina e di zucchero servono per preparare una torta di mele soffice?",
+        "ground_truth": "Informazione non presente nei testi di riferimento."
     },
     {
         "id": 24,
         "categoria": "Out-of-scope",
-        "domanda": "Quale squadra di calcio ha vinto l'ultima edizione della UEFA Champions League?"
+        "domanda": "Quale squadra di calcio ha vinto l'ultima edizione della UEFA Champions League?",
+        "ground_truth": "Informazione non presente nei testi di riferimento."
     },
     {
         "id": 25,
         "categoria": "Out-of-scope (Subdola)",
-        "domanda": "In che modo si utilizza la funzione di 'reinforcement learning' integrata nel 'crawler-service' di AWS Lambda per ottimizzare automaticamente le tabelle di DynamoDB?"
+        "domanda": "In che modo si utilizza la funzione di 'reinforcement learning' integrata nel 'crawler-service' di AWS Lambda per ottimizzare automaticamente le tabelle di DynamoDB?",
+        "ground_truth": "Informazione non presente nei testi di riferimento. Il crawler-service illustrato è un servizio asincrono che scarica immagini da URL, ma i testi non menzionano che utilizzi reinforcement learning né che serva a ottimizzare DynamoDB."
     },
     {
         "id": 26,
         "categoria": "Out-of-scope (Subdola)",
-        "domanda": "Qual è il comando esatto in PowerShell per istruire l'agente 'UserProxy' di AutoGen a eseguire in autonomia una migrazione da Oracle 19c a 23ai in meno di due ore?"
+        "domanda": "Qual è il comando esatto in PowerShell per istruire l'agente 'UserProxy' di AutoGen a eseguire in autonomia una migrazione da Oracle 19c a 23ai in meno di due ore?",
+        "ground_truth": "Informazione non presente nei testi di riferimento. La domanda mescola un esempio di Project Management di una migrazione di database tratto da 'AI for Everyday IT' con lo strumento AutoGen discusso in 'AI Agents in Action', ma nessun testo fornisce un comando PowerShell per farlo."
     },
     {
         "id": 27,
         "categoria": "Ambigua",
-        "domanda": "Che cos'è esattamente un token e qual è il suo limite massimo?"
+        "domanda": "Che cos'è esattamente un token e qual è il suo limite massimo?",
+        "expected_file": "AI_for_Everyday_IT.pdf",
+        "ground_truth": "Un token è un'unità minima di testo elaborata dal modello AI. In inglese corrisponde a circa 4 caratteri o a 3/4 di una parola. Non esiste un limite massimo univoco: dipende interamente dal modello AI che si sta utilizzando (ad es., ChatGPT 3.5 ha 4K-8K token, GPT-4o 128K, mentre i modelli Gemini Pro raggiungono 1 o 2 milioni)."
     },
     {
         "id": 28,
         "categoria": "Ambigua",
-        "domanda": "Come si implementa l'architettura migliore per risolvere problemi di scalabilità?"
+        "domanda": "Come si implementa l'architettura migliore per risolvere problemi di scalabilità?",
+        "expected_file": "AI_as_a_Service.pdf, AI_Agents_in_Action.pdf",
+        "ground_truth": "La domanda è troppo generica e manca di contesto. A livello infrastrutturale, i testi suggeriscono le architetture 'Serverless' (funzioni FaaS, SQS e DynamoDB) per garantire la scalabilità automatica cloud-native. A livello di sistemi AI conversazionali, si consigliano framework multi-agente, l'uso del caching per preservare i token e l'impiego di database vettoriali/sistemi RAG per non sovraccaricare la finestra di contesto."
     },
     {
         "id": 29,
         "categoria": "Edge case",
-        "domanda": "Facendo riferimento all'esempio della configurazione YAML del servizio asincrono, qual è la stringa esatta della proprietà `Action` nel file `serverless.yml` per consentire al crawler di scrivere oggetti nel bucket S3?"
+        "domanda": "Facendo riferimento all'esempio della configurazione YAML del servizio asincrono, qual è la stringa esatta della proprietà `Action` nel file `serverless.yml` per consentire al crawler di scrivere oggetti nel bucket S3?",
+        "expected_file": "AI_as_a_Service.pdf",
+        "ground_truth": "La stringa esatta della proprietà Action indicata nel file di configurazione yaml è `s3:PutObject`."
     },
     {
         "id": 30,
         "categoria": "Edge case",
-        "domanda": "Secondo la tabella comparativa dei limiti dei token fornita nel testo, qual è esattamente il limite massimo di token in output supportato dal modello 'OpenAI o3-mini'?"
+        "domanda": "Secondo la tabella comparativa dei limiti dei token fornita nel testo, qual è esattamente il limite massimo di token in output supportato dal modello 'OpenAI o3-mini'?",
+        "expected_file": "AI_for_Everyday_IT.pdf",
+        "ground_truth": "Secondo la tabella comparativa, il limite massimo in output supportato da OpenAI o3-mini è di 100K (100.000) token."
     }
 ]
