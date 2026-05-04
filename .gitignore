@@ -8,6 +8,7 @@ env/
 # Docker & Environment
 .env
 docker-compose.override.yml
+appunti.txt
 
 # IDE settings (VS Code, JetBrains)
 .vscode/
