@@ -168,3 +168,25 @@ JSON
   }
 }
 ```
+
+#### Comandi per terminale
+```
+Indicizzazione standard (usa il preset MEDIUM)
+docker exec -it rag_progetto python app.py index
+```
+```
+Indicizzazione con frammenti PICCOLI (più precisi)
+docker exec -it rag_progetto python app.py index --preset SMALL
+```
+```
+Indicizzazione con frammenti GRANDI (più contesto)
+docker exec -it rag_progetto python app.py index --preset LARGE
+```
+```
+Domanda semplice
+docker exec -it rag_progetto python app.py ask "Cosa sono gli agenti AI?"
+```
+```
+Domanda avanzata (Top-K = 10 e filtro su un file specifico)
+docker exec -it rag_progetto python app.py ask "Spiegami il serverless" -k 10 --source "AI_as_a_Service.pdf"
+'''

@@ -2,6 +2,7 @@ import os
 import glob
 import logging
 import hashlib
+from pathlib import Path
 from contextlib import asynccontextmanager
 
 import yaml
@@ -43,7 +44,21 @@ QDRANT_HOST = os.getenv("QDRANT_HOST", "http://qdrant:6333")
 OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "mistral")
 EMBEDDING_MODEL = os.getenv("EMBEDDING_MODEL", "nomic-embed-text")
 COLLECTION_NAME = os.getenv("COLLECTION_NAME", "default_collection")
-SOURCE_DIR = os.getenv("SOURCE_DIR", "/app/documenti_da_indicizzare")
+SOURCE_DIR = os.getenv("SOURCE_DIR", "/data/input")
+
+# 1. Trova il percorso ASSOLUTO in cui si trova questo file (main.py)
+BASE_DIR = Path(__file__).resolve().parent
+
+# 2. Uniscilo al nome del file
+CONFIG_PATH = BASE_DIR / "config.yaml"
+
+try:
+    with open(CONFIG_PATH, "r") as f:
+        config = yaml.safe_load(f)
+    logger.info(f"Configurazione caricata con successo da: {CONFIG_PATH}") # Aggiungiamo questa riga per conferma!
+except FileNotFoundError:
+    logger.error(f"ERRORE CRITICO: File config.yaml NON trovato nel percorso esatto: {CONFIG_PATH}")
+    config = {}
 
 # Definisce le strategie di chunking per sperimentare diverse granularità
 CHUNK_PRESETS = {
@@ -93,18 +108,18 @@ def calculate_file_hash(filepath: str) -> str:
 
 def load_chunking_config(strategy: str) -> dict:
     """Carica la configurazione di chunking dal file YAML."""
-    config_path = Path("config.yaml")
-    if not config_path.exists():
-        logger.warning(f"File {config_path} non trovato. Uso configurazione MEDIUM di default.")
-        return {"size": 1000, "overlap": 200}
+    # Usiamo la variabile globale CONFIG_PATH definita in alto nel file!
+    if not CONFIG_PATH.exists():
+        logger.warning(f"File {CONFIG_PATH} non trovato. Uso configurazione MEDIUM di default.")
+        return {"chunk_size": 1000, "chunk_overlap": 200}
     
-    with open(config_path, 'r') as file:
+    with open(CONFIG_PATH, 'r') as file:
         config_data = yaml.safe_load(file)
         
     presets = config_data.get("chunking_presets", {})
     if strategy not in presets:
-        logger.warning(f"Preset '{strategy}' non trovato in {config_path}. Uso MEDIUM.")
-        return presets.get("MEDIUM", {"size": 1000, "overlap": 200})
+        logger.warning(f"Preset '{strategy}' non trovato in {CONFIG_PATH}. Uso MEDIUM.")
+        return presets.get("MEDIUM", {"chunk_size": 1000, "chunk_overlap": 200})
         
     return presets[strategy]
 

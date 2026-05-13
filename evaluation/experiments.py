@@ -6,7 +6,12 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from datasets import Dataset
 
-# Importiamo TUTTE le metriche dal tuo evaluate.py
+# Aggiunge la root del progetto al path di Python
+import sys
+import os
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
+# Importiamo TUTTE le metriche da evaluate.py
 from evaluate import (
     calculate_mrr, 
     calculate_recall, 
@@ -39,7 +44,7 @@ def check_citation_accuracy(response: str, sources: list) -> float:
     return cited_correctly / len(sources)
 
 def run_matrix_experiment():
-    with open("golden_dataset.json", "r", encoding="utf-8") as f:
+    with open("evaluation/golden_dataset.json", "r", encoding="utf-8") as f:
         dataset = json.load(f)
 
     results_master = []
@@ -125,7 +130,11 @@ def run_matrix_experiment():
 
     # Salva il report definitivo
     master_df = pd.DataFrame(results_master)
-    master_df.to_csv("esperimento_confronto_finale.csv", index=False)
+    # Assicura che la cartella dei risultati esista prima di salvare
+    os.makedirs("data/results", exist_ok=True)
+    
+    # Salvataggio del CSV nella cartella 'data/results'
+    master_df.to_csv("data/results/esperimento_confronto_finale.csv", index=False)
     
     # Genera grafici
     generate_charts(master_df)
@@ -137,8 +146,9 @@ def generate_charts(df):
         pivot = df.pivot_table(index='Strategy', columns='K', values=metric, aggfunc='mean')
         sns.heatmap(pivot, annot=True, cmap="YlGnBu", fmt=".2f")
         plt.title(f"Analisi {metric}: Chunking vs K")
-        plt.savefig(filename)
-        logging.info(f"Grafico generato: {filename}")
+        # Salvataggio delle immagini nella cartella 'data/results'
+        plt.savefig(f"data/results/{filename}")
+        logging.info(f"Grafico generato e salvato in data/results/{filename}")
 
 if __name__ == "__main__":
     run_matrix_experiment()

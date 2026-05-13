@@ -6,7 +6,8 @@ services:
       - "8000:8000"
     volumes:
       - .:/app                      # Hot-reload del codice
-      - ./documenti_da_indicizzare:/app/documenti_da_indicizzare # PDF
+      - ./data/input:/app/data/input             
+      - ./data/results:/app/data/results
     environment:
       - OLLAMA_HOST=http://ollama:11434
       - QDRANT_HOST=http://qdrant:6333
