@@ -1,192 +1,139 @@
-# Documentazione di Sistema: RAG Backend (FastAPI + LangChain)
-Questo documento illustra l'architettura, la configurazione e il funzionamento del backend per il sistema RAG (Retrieval-Augmented Generation) locale.
+# Sistema RAG Offline Completo (FastAPI + LangChain + Ollama + Qdrant)
 
-L'infrastruttura permette di interrogare in linguaggio naturale una base di conoscenza privata (file PDF), sfruttando Ollama come motore di Intelligenza Artificiale e Qdrant come database vettoriale.
+Questo repository contiene un'implementazione avanzata di un sistema RAG (Retrieval-Augmented Generation) completamente offline. Il progetto sfrutta **Ollama** per l'esecuzione locale di Large Language Models (LLMs) ed Embeddings, **Qdrant** come vector database e **FastAPI** come backend server, uniti dalla logica orchestrata da **LangChain**.
 
-1. **Configurazione e Logging**
-La fase di setup garantisce che l'applicazione sia disaccoppiata dall'infrastruttura sottostante tramite variabili d'ambiente e che ogni azione sia tracciata.
+Il sistema è progettato per garantire robustezza, riducendo le allucinazioni tramite *guardrails* molto rigidi, consentendo la valutazione sistematica con framework come *RAGAS* e fornendo interfacce sia tramite CLI (Command Line Interface) che tramite API REST.
 
-2. **Gestione Variabili d'Ambiente (.env)**
-Per evitare l'hardcoding, i parametri vitali vengono estratti tramite dotenv. Se una variabile manca, il sistema adotta un valore di fallback sicuro
+---
 
-#### Indirizzi dei servizi e modelli AI
-```
-OLLAMA_HOST = os.getenv("OLLAMA_HOST", "http://ollama:11434")
-QDRANT_HOST = os.getenv("QDRANT_HOST", "http://qdrant:6333")
-OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "mistral")
-EMBEDDING_MODEL = os.getenv("EMBEDDING_MODEL", "nomic-embed-text")
-```
-#### Configurazione Dati
-```
-COLLECTION_NAME = os.getenv("COLLECTION_NAME", "default_collection")
-SOURCE_DIR = os.getenv("SOURCE_DIR", "/app/documenti_da_indicizzare")
-```
-#### Strategie di Chunking
-Tagliare i documenti in frammenti (chunk) è vitale nel RAG. Il sistema prevede tre profili pronti all'uso:
+## 🌟 Architettura e Funzionalità Principali
 
-**size**: Il numero massimo di caratteri per frammento.
+### 1. Ingestion Intelligente
+- **Chunking Configurabile**: I documenti in ingresso (PDF) vengono suddivisi in *chunk* tramite parametri configurabili (`app/config.yaml`). Sono disponibili tre preset: `SMALL`, `MEDIUM`, `LARGE` per testare la granularità.
+- **Caching basato su Hash (SHA-256)**: Il sistema calcola l'hash dei file in fase di ingestion per evitare la ri-elaborazione degli stessi file già presenti in Qdrant, ottimizzando i tempi di caricamento.
+- **Metadati Ricchi**: Ad ogni *chunk* vengono associati nome del file, numero di pagina e hash.
 
-**overlap**: La sovrapposizione tra un frammento e l'altro per mantenere il contesto semantico.
+### 2. Recupero e Generazione (RAG Engine)
+- **Top-K Dinamico e Filtraggio**: Possibilità di definire quanti frammenti recuperare (`-k`) e l'opzione di limitare la ricerca a un singolo documento target (`--source`).
+- **Guardrails e Prompting Rigoroso**: Prompt progettati per:
+  - **Risposte Closed-Book**: Basare le risposte ESCLUSIVAMENTE sui documenti.
+  - **Citazioni Obbligatorie**: Riportare la fonte (file e pagina) all'interno del testo generato.
+  - **Astensione Controllata**: Se il contesto non supporta la domanda (out-of-scope), il sistema deve restituire una stringa esatta di "ASTENSIONE: ...".
+- **Self-Correction & Query Rewriting**: Se il modello si astiene, un layer intermedio esegue un *query rewriting* per riformulare la domanda iniziale dell'utente (usando sinonimi o generalizzazioni) e tenta un secondo passaggio di retrieval per aumentare la probabilità di successo.
 
-```
-CHUNK_PRESETS = {
-    "SMALL": {"size": 400, "overlap": 80},     # Per dettagli granulari
-    "MEDIUM": {"size": 1000, "overlap": 200},  # Bilanciamento standard
-    "LARGE": {"size": 2000, "overlap": 300}    # Per contesti molto ampi
-}
-```
+### 3. API REST e Lifespan FastAPI
+- Server asincrono che inizializza la base di dati all'avvio garantendo l'accessibilità immediata delle risorse.
+- **Endpoint `/ask`**: Per fare domande (con parametri per k e filtro sorgente).
+- **Endpoint `/reindex`**: Lancia l'indicizzazione in un *background task* asincrono, evitando blocchi per gli altri client web connessi.
 
-#### Logging Strutturato
-Sostituisce i comandi print con il modulo nativo logging in formato Syslog, indispensabile per il monitoraggio in produzione:
+### 4. Framework di Valutazione (Evaluation & Experiments)
+Il sistema prevede script dedicati alla misurazione dell'accuratezza tramite un *golden dataset* di test (`evaluation/golden_dataset.json`).
+- **`evaluate.py`**:
+  - Calcola *metriche manuali di retrieval*: MRR (Mean Reciprocal Rank), Hit Rate, e Recall.
+  - Valuta *metriche di comportamento*: Correct Abstention Rate (per domande out-of-scope) e Hallucination Rate.
+  - Integra **RAGAS** per misurare le performance puramente LLM (Faithfulness, Answer Correctness) usando il modello locale come giudice.
+- **`experiments.py`**:
+  - Esegue una matrice di test esaustiva confrontando:
+    - **Strategie di Chunking** (SMALL, MEDIUM, LARGE)
+    - **Modelli di Embedding** (es. *nomic-embed-text*, *mxbai-embed-large*)
+    - **Valori di Top-K** (3, 5, 10)
+  - Mantiene gli esperimenti in collezioni Qdrant temporanee/separate, isolate da quella di produzione.
+  - Esporta i risultati globali in CSV (`data/results/`) e genera Heatmaps grafiche per Recall e MRR per giustificare la scelta dei parametri migliori.
 
-```
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s [%(levelname)s] %(message)s',
-    datefmt='%Y-%m-%d %H:%M:%S'
-)
-logger = logging.getLogger(__name__)
-```
-# Il Motore RAG: Indicizzazione Dati
-La funzione ingest_local_documents() gestisce l'intero processo di lettura e salvataggio dei PDF nel database vettoriale, diviso in fasi distinte.
+---
 
-### Fase A: Gestione Cache
-Per ridurre i tempi di avvio e lo sforzo della GPU, il sistema verifica se i dati sono già presenti in Qdrant:
+## 🛠 Setup e Configurazione
 
-```
-collections = client.get_collections().collections
-exists = any(c.name == COLLECTION_NAME for c in collections)
+1. Clonare il repository.
+2. Predisporre i modelli base di **Ollama** che si intendono utilizzare (default: `mistral` per la generazione, `nomic-embed-text` per gli embeddings).
+3. Configurare le variabili d'ambiente nel file `.env` (si può prendere come base `.env.example`).
+4. Installare le dipendenze Python tramite `pip install -r requirements.txt` (o usare Docker Compose).
 
-if exists:
-    logger.info("CACHE TROVATA. Salto l'ingestion per risparmiare risorse.")
-    return # Evita di rileggere i PDF
-```
-### Fase B: Estrazione e Chunking
-Se la cache è vuota, il sistema carica i PDF e li scompone intelligentemente:
-
-1. Estrazione del testo dal PDF
-```
-loader = PyPDFLoader(pdf_path)
-pages = loader.load()
-```
-2. Suddivisione semantica (Chunking)
-```
-text_splitter = RecursiveCharacterTextSplitter(
-    chunk_size=config["size"],
-    chunk_overlap=config["overlap"],
-    separators=["\n\n", "\n", ".", " "] # Ordine di preferenza per i tagli
-)
-chunks = text_splitter.split_documents(pages)
-```
-### Fase C: Embedding e Storage
-I frammenti di testo vengono inviati a Ollama per essere convertiti in coordinate matematiche (vettori) e infine salvati in Qdrant:
-
-```
-vector_store = QdrantVectorStore.from_documents(
-    documents=all_chunks,
-    embedding=embeddings, # Modello nomic-embed-text
-    url=QDRANT_HOST,
-    collection_name=COLLECTION_NAME,
-    force_recreate=True 
-)
-```
-#### Ciclo di Vita (Lifespan)
-Il server utilizza il costrutto moderno **@asynccontextmanager** per assicurarsi che la base di conoscenza sia pronta prima di accettare richieste web esterne:
-
-```
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    logger.info("Inizializzazione del sistema RAG...")
-    ingest_local_documents() # Popola o carica la memoria
-    yield                    # Il server inizia ad accettare chiamate HTTP
-    logger.info("Chiusura del server in corso. Pulizia risorse...")
-
-app = FastAPI(lifespan=lifespan)
-```
-## Gli Endpoint API
-Il livello esposto agli utenti è gestito da FastAPI. Entrambi gli endpoint accettano richieste in POST.
-
-#### Endpoint 1: /reindex
-Permette di far leggere al sistema nuovi PDF inseriti nella cartella, delegando il calcolo pesante a un Background Task, senza bloccare il traffico in entrata:
-
-```
-@app.post("/reindex")
-async def trigger_reindex(background_tasks: BackgroundTasks):
-    logger.info("Avvio re-indicizzazione in background...")
-    background_tasks.add_task(ingest_local_documents)
-    return {"status": "ok", "dettaglio": "Elaborazione avviata in background."}
-```
-#### Endpoint 2: /ask (La Pipeline di Risposta)
-Questo endpoint orchestra l'intera comunicazione tra l'utente, il database vettoriale e il modello linguistico locale (Mistral).
-
-1. Retrieval (Recupero Semantico)
-Il sistema converte la domanda in vettore e recupera i k=4 frammenti di testo più simili dal database:
-
-```
-results_with_score = vs.similarity_search_with_score(question, k=4)
-context = "\n".join([doc.page_content for doc, _ in results_with_score])
+Parametri di base `.env`:
+```env
+OLLAMA_HOST=http://localhost:11434
+QDRANT_HOST=http://localhost:6333
+OLLAMA_MODEL=mistral
+EMBEDDING_MODEL=nomic-embed-text
+COLLECTION_NAME=default_collection
+SOURCE_DIR=data/input
 ```
 
-2. Prompting
-Per evitare che l'AI "allucini" o inventi risposte non presenti nei documenti, viene imposto un PromptTemplate rigoroso:
+*(Nota: in un contesto Dockerizzato tramite `docker-compose`, i nomi degli host corrisponderanno ai nomi dei servizi, ad esempio `http://ollama:11434` e `http://qdrant:6333`).*
 
-```
-prompt = PromptTemplate.from_template("""
-Rispondi in Italiano basandoti SOLO sul contesto fornito. 
-Se le informazioni non sono sufficienti, dillo chiaramente.
-Contesto: {context}
-Domanda: {question}
-Risposta:""")
-```
+---
 
-3. Generation (Invocazione dell'LLM)
-Il contesto fuso con la domanda viene inviato al modello generativo:
+## 💻 Interfaccia a Linea di Comando (CLI)
 
-```
-llm = OllamaLLM(base_url=OLLAMA_HOST, model=OLLAMA_MODEL)
-answer = llm.invoke(prompt.format(context=context, question=question))
-```
+Il file `app.py` funge da punto d'ingresso principale in ambiente CLI.
 
-4. Post-Processing e Risposta JSON
-Il server formatta i metadati dei PDF e la risposta generata in un oggetto JSON pulito, includendo la confidenza matematica dell'operazione.
+### Indicizzare i Documenti (Ingestion)
+I documenti inseriti nella cartella `data/input` (o quella configurata in `.env`) verranno passati nel database vettoriale.
 
-```
-JSON
-{
-  "risposta_diretta": "Gli algoritmi di machine learning più usati sono...",
-  "fonti": [
-    {
-      "file": "AI_as_a_Service.pdf",
-      "pag": 1,
-      "score": 0.696,
-      "estratto": "MANNING Peter Elger Eóin Shanaghy Serverless machine..."
-    }
-  ],
-  "confidenza": {
-    "livello": "Media (Corrispondenza parziale)",
-    "motivazione": "Punteggio medio 0.67."
-  }
-}
+```bash
+# Usa il preset di chunking di default (MEDIUM)
+python app.py index
+
+# Usa un preset di chunking specifico
+python app.py index --preset SMALL
+python app.py index --preset LARGE
 ```
 
-#### Comandi per terminale
+### Interrogare il RAG (Ask)
+Lancia l'interrogazione completa sulla base di dati indicizzata.
+
+```bash
+# Domanda semplice (Top-K default = 4)
+python app.py ask "Quali sono i concetti chiave dell'AI?"
+
+# Domanda specificando Top-K a 10
+python app.py ask "Quali sono i concetti chiave dell'AI?" -k 10
+
+# Domanda filtrata su un documento specifico
+python app.py ask "Cosa si dice di X?" --source "Documento_Target.pdf"
 ```
-Indicizzazione standard (usa il preset MEDIUM)
-docker exec -it rag_progetto python app.py index
+Il terminale risponderà con una formattazione chiara divisa in `[RISPOSTA]`, `[FONTI]`, `[CONFIDENZA]` e `[MOTIVAZIONE]`.
+
+---
+
+## 🌐 Utilizzo API REST (FastAPI)
+
+Avviando il server FastAPI (es. tramite uvicorn o Docker Compose), l'app espone un server che permette l'integrazione con eventuali frontend o microservizi.
+
+**1. Risposta del RAG (`POST /ask`)**
+Parametri Form Data:
+- `question` (string): La domanda da porre.
+- `k` (int, opzionale, default 4): Quanti chunk recuperare.
+- `source` (string, opzionale): Filtro per limitare a un singolo documento target.
+
+**2. Re-indicizzazione asincrona (`POST /reindex`)**
+Non accetta parametri. Avvia l'ingestion in un thread secondario, scansionando nuovamente la directory `SOURCE_DIR` per nuovi PDF non ancora indicizzati (grazie al controllo su hash).
+
+---
+
+## 📊 Sistema di Valutazione (Evaluation)
+
+Per testare e provare statisticamente le performance del sistema RAG, spostarsi nella root e lanciare gli script dedicati all'interno di `evaluation/`. I test si basano su un set di query in `evaluation/golden_dataset.json`.
+
+**1. Valutazione standard (`evaluate.py`)**
+Effettua un run con i parametri attuali (k=4) sul dataset e genera report CSV (`report_metriche_manuali.csv` e `report_metriche_ragas.csv`). Mostra a schermo statistiche globali su MRR, Hit Rate, Recall e Astensioni corrette.
+```bash
+python evaluation/evaluate.py
 ```
+
+**2. Matrice degli Esperimenti (`experiments.py`)**
+Esegue tutte le permutazioni dei parametri configurabili per trovare l'impostazione RAG "ottimale" (Hyperparameter tuning). Questa operazione è onerosa a livello computazionale (richiederà svariati minuti/ore in base all'hardware).
+```bash
+python evaluation/experiments.py
 ```
-Indicizzazione con frammenti PICCOLI (più precisi)
-docker exec -it rag_progetto python app.py index --preset SMALL
-```
-```
-Indicizzazione con frammenti GRANDI (più contesto)
-docker exec -it rag_progetto python app.py index --preset LARGE
-```
-```
-Domanda semplice
-docker exec -it rag_progetto python app.py ask "Cosa sono gli agenti AI?"
-```
-```
-Domanda avanzata (Top-K = 10 e filtro su un file specifico)
-docker exec -it rag_progetto python app.py ask "Spiegami il serverless" -k 10 --source "AI_as_a_Service.pdf"
-'''
+I risultati finali (comprese le *Heatmap* visuali per un confronto immediato di MRR e Recall al variare del parametro *K* e della strategia di *Chunking*) verranno salvati nella cartella `data/results/`.
+
+---
+
+## 🔒 Sicurezza e Robustezza
+
+Il sistema prevede un approccio di tipo "**Strict Grounding**".
+Il prompt (visibile in `app/prompt.py`) forza severamente le limitazioni, ma l'intero layer logico in `core_rag_ask` supervisiona la coerenza dell'output:
+- Se il database vettoriale restituisce un livello di confidenza basso, un sistema euristico lo classifica e avverte l'utente.
+- Se la risposta del modello non supera i test di pertinenza e include "ASTENSIONE:", subentra un *fall-back* sicuro con astensione rigida limitando allucinazioni (es. risposte a domande *out-of-scope* non inerenti ai documenti testati).
+- Un sistema di self-correction (tramite **query rewriting** basato su LLM) cerca di mitigare il problema se la prima query vettoriale era malformata o troppo stringente, dando un *seconda chance* tramite sinonimizzazione prima di arrendersi all'astensione globale.
