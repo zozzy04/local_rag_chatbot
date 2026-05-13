@@ -6,6 +6,8 @@ from datasets import Dataset
 
 # Setup RAGAS e Langchain
 from ragas import evaluate
+from ragas.llms import LangchainLLMWrapper
+from ragas.embeddings import LangchainEmbeddingsWrapper
 from ragas.metrics import (
     faithfulness,
     answer_correctness
@@ -22,16 +24,22 @@ except ImportError:
 logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')
 
 # --- Configurazione Modelli per RAGAS ---
-OLLAMA_URL = "http://localhost:11434" 
+OLLAMA_URL = "http://ollama:11434" 
 RAGAS_EVAL_MODEL = "mistral"          
 RAGAS_EMBEDDING_MODEL = "nomic-embed-text"
 
+# Inizializza i modelli standard Langchain
 llm_judge = ChatOllama(base_url=OLLAMA_URL, model=RAGAS_EVAL_MODEL)
 embedder = OllamaEmbeddings(base_url=OLLAMA_URL, model=RAGAS_EMBEDDING_MODEL)
 
-faithfulness.llm = llm_judge
-answer_correctness.llm = llm_judge
-answer_correctness.embeddings = embedder
+# Incartali nei Wrapper di Ragas
+ragas_llm = LangchainLLMWrapper(llm_judge)
+ragas_emb = LangchainEmbeddingsWrapper(embedder)
+
+# Assegna i Wrapper alle metriche
+faithfulness.llm = ragas_llm
+answer_correctness.llm = ragas_llm
+answer_correctness.embeddings = ragas_emb
 
 # ==========================================
 # 1. METRICHE MANUALI: RETRIEVAL
