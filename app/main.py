@@ -138,81 +138,83 @@ def is_file_in_qdrant(client: qdrant_client.QdrantClient, collection_name: str, 
         logger.warning(f"Errore durante il controllo hash in Qdrant: {e}")
         return False
 
-def ingest_local_documents(strategy: str = "MEDIUM"):
+def ingest_local_documents(strategy: str = "MEDIUM", embedding_model_name: str = None):
     """
-    Gestisce l'intero processo di indicizzazione dei documenti (ETL Pipeline):
-    1. Inizializza la connessione a Qdrant.
-    2. Carica i PDF dalla cartella.
-    3. Controlla l'hash per evitare di riprocessare file già indicizzati.
-    4. Esegue lo splitting e aggiunge l'hash ai metadati.
-    5. Calcola gli embeddings e salva le novità nel database vettoriale.
+    Gestisce l'intero processo di indicizzazione dei documenti.
     """
+    emb_model = embedding_model_name or os.getenv("EMBEDDING_MODEL", "nomic-embed-text")
+    
+    # --- ISOLAMENTO DELLA COLLEZIONE per experiments.py ---
+    # Se è un esperimento, usiamo una collezione temporanea per non sporcare il DB principale
+    target_collection = f"{COLLECTION_NAME}_experiment" if embedding_model_name else COLLECTION_NAME
     
     # 1. Connessione al Client Qdrant
     client = qdrant_client.QdrantClient(url=QDRANT_HOST)
-    embeddings = OllamaEmbeddings(base_url=OLLAMA_HOST, model=EMBEDDING_MODEL)
+    embeddings = OllamaEmbeddings(base_url=OLLAMA_HOST, model=emb_model)
     
+    if embedding_model_name:
+        vector_size = 768 if "nomic" in emb_model.lower() else 1024
+        logger.info(f"Modalità Esperimento: Ricreazione collezione Qdrant '{target_collection}' con size {vector_size}")
+        client.recreate_collection(
+            collection_name=target_collection,
+            vectors_config=rest.VectorParams(size=vector_size, distance=rest.Distance.COSINE),
+        )
+        if target_collection in active_collections:
+            del active_collections[target_collection]
+
     # Verifica se la collezione esiste già nel DB
     collections = client.get_collections().collections
-    collection_exists = any(c.name == COLLECTION_NAME for c in collections)
+    collection_exists = any(c.name == target_collection for c in collections)
     
-    # Se esiste, inizializziamo subito il vector store per tenerlo pronto per la ricerca
+    # Se esiste, inizializziamo subito il vector store
     if collection_exists:
         vector_store = QdrantVectorStore(
             client=client,
-            collection_name=COLLECTION_NAME,
+            collection_name=target_collection,
             embedding=embeddings,
         )
-        active_collections[COLLECTION_NAME] = {
+        active_collections[target_collection] = {
             "vector_store": vector_store,
             "strategy": strategy
         }
     else:
-        logger.info(f"La collezione '{COLLECTION_NAME}' non esiste ancora. Verrà creata a breve.")
+        logger.info(f"La collezione '{target_collection}' non esiste ancora. Verrà creata a breve.")
         vector_store = None
 
     if not os.path.exists(SOURCE_DIR):
         os.makedirs(SOURCE_DIR)
         return
 
-    # Cerca tutti i file PDF nella directory specificata
     pdf_files = glob.glob(os.path.join(SOURCE_DIR, "*.pdf"))
     if not pdf_files:
         logger.warning("Nessun PDF trovato nella cartella locale.")
         return
 
-    # Recupera i parametri di configurazione dal file YAML
     preset_config = load_chunking_config(strategy)
     config = {
         "size": preset_config.get("chunk_size", 1000),
         "overlap": preset_config.get("chunk_overlap", 200)
     }
-    # recuperiamo anche i separators dal file yaml se ci sono, altrimenti usiamo un default
     separators = preset_config.get("separators", ["\n\n", "\n", ".", " "])
     
     new_chunks_to_add = []
-    
-    logger.info(f"INIZIO INGESTION (Strategia: {strategy}) - Parametri: Chunk Size {config['size']} | Overlap {config['overlap']}")
+    logger.info(f"INIZIO INGESTION (Strategia: {strategy} | Modello: {emb_model} | Collezione: {target_collection})")
     
     for i, pdf_path in enumerate(pdf_files, 1):
         try:
             filename = os.path.basename(pdf_path)
-
-            # Calcolo dell'hash del file
             file_hash = calculate_file_hash(pdf_path)
             
-            # Controllo Hash: lo facciamo SOLO se la collezione esiste già
-            if collection_exists and is_file_in_qdrant(client, COLLECTION_NAME, file_hash):
-                logger.info(f"File [{i}/{len(pdf_files)}]: {filename} GIÀ INDICIZZATO (Hash in cache). Salto.")
+            # Controllo sull'hash della collezione corretta
+            if collection_exists and is_file_in_qdrant(client, target_collection, file_hash):
+                logger.info(f"File [{i}/{len(pdf_files)}]: {filename} GIÀ INDICIZZATO. Salto.")
                 continue 
             
             logger.info(f"Elaborazione file [{i}/{len(pdf_files)}]: {filename} (Hash: {file_hash[:8]}...)")
             
-            # Caricamento del PDF (Parsing)
             loader = PyPDFLoader(pdf_path)
             pages = loader.load()
 
-            # Normalizzazione dei Metadati
             for idx, page in enumerate(pages):
                  page.metadata = {
                      "source": filename,
@@ -220,17 +222,13 @@ def ingest_local_documents(strategy: str = "MEDIUM"):
                      "file_hash": file_hash 
                  }
             
-            # Suddivisione del testo (Chunking)
             text_splitter = RecursiveCharacterTextSplitter(
                 chunk_size=config["size"],
                 chunk_overlap=config["overlap"],
-                separators=["\n\n", "\n", ".", " "]
+                separators=separators
             )
             chunks = text_splitter.split_documents(pages)
             
-            avg_chunk_size = sum(len(c.page_content) for c in chunks) / len(chunks) if chunks else 0
-            logger.info(f"Elaborato file {filename} | Pagine: {len(pages)} | Chunk Generati: {len(chunks)} | Dim. Media: {int(avg_chunk_size)} caratteri")
-
             new_chunks_to_add.extend(chunks)
             
         except Exception as e:
@@ -239,73 +237,66 @@ def ingest_local_documents(strategy: str = "MEDIUM"):
     # --- 3. CREAZIONE COLLEZIONE O AGGIUNTA CHUNK ---
     if new_chunks_to_add:
         if not collection_exists:
-            # CASO A: Il DB è vuoto, la collezione non esiste. 
-            # vector_store al momento è None. Usiamo from_documents per creare tutto da zero.
-            logger.info(f"Creazione della nuova collezione '{COLLECTION_NAME}' e salvataggio di {len(new_chunks_to_add)} chunk...")
+            logger.info(f"Creazione della nuova collezione '{target_collection}' e salvataggio di {len(new_chunks_to_add)} chunk...")
             
             vector_store = QdrantVectorStore.from_documents(
                 documents=new_chunks_to_add,
                 embedding=embeddings,
                 url=QDRANT_HOST,
-                collection_name=COLLECTION_NAME,
+                collection_name=target_collection,
                 force_recreate=True 
             )
-            # Registra il vector_store appena creato
-            active_collections[COLLECTION_NAME] = {
+            active_collections[target_collection] = {
                 "vector_store": vector_store,
                 "strategy": strategy
             }
         else:
-            # CASO B: La collezione esiste già (vector_store NON è None).
-            # Facciamo solo l'aggiunta (append) dei nuovi file.
-            logger.info(f"Aggiunta di {len(new_chunks_to_add)} nuovi chunk alla collezione esistente...")
+            logger.info(f"Aggiunta di {len(new_chunks_to_add)} nuovi chunk alla collezione esistente '{target_collection}'...")
             vector_store.add_documents(new_chunks_to_add)
 
-        logger.info("SISTEMA PRONTO! Indicizzazione completata con successo.")
+        logger.info("SISTEMA PRONTO! Indicizzazione completata.")
     else:
-        logger.info("SISTEMA PRONTO! Nessun nuovo documento da indicizzare, i dati sono già allineati.")
+        logger.info("SISTEMA PRONTO! Nessun nuovo documento.")
 
-def core_rag_ask(question: str, top_k: int = 4, source_filter: str = None) -> dict:
+def core_rag_ask(question: str, top_k: int = 4, source_filter: str = None, embedding_model_name: str = None):
     """
     Logica di business principale per il RAG.
-    Viene usata sia dalla CLI che dall'endpoint FastAPI.
     """
-    collection_name = COLLECTION_NAME
+    emb_model = embedding_model_name or os.getenv("EMBEDDING_MODEL", "nomic-embed-text")
+    
+    # --- ISOLAMENTO DELLA COLLEZIONE ESPERIMENTI ---
+    target_collection = f"{COLLECTION_NAME}_experiment" if embedding_model_name else COLLECTION_NAME
     
     # INIZIALIZZAZIONE "LAZY"
-    if collection_name not in active_collections:
-        logger.info("Inizializzazione 'lazy' della connessione al vector store...")
+    if target_collection not in active_collections:
+        logger.info(f"Inizializzazione 'lazy' della connessione al vector store ({target_collection})...")
         client = qdrant_client.QdrantClient(url=QDRANT_HOST)
         
-        # Verifica se la collezione esiste effettivamente in Qdrant
         collections = client.get_collections().collections
-        if any(c.name == collection_name for c in collections):
-            embeddings = OllamaEmbeddings(base_url=OLLAMA_HOST, model=EMBEDDING_MODEL)
+        if any(c.name == target_collection for c in collections):
+            embeddings = OllamaEmbeddings(base_url=OLLAMA_HOST, model=emb_model)
             vector_store = QdrantVectorStore(
                 client=client,
-                collection_name=collection_name,
+                collection_name=target_collection,
                 embedding=embeddings,
             )
-            # Popola il dizionario locale
-            active_collections[collection_name] = {
+            active_collections[target_collection] = {
                 "vector_store": vector_store,
                 "strategy": "Loaded from DB"
             }
         else:
-            raise ValueError(f"La collezione '{collection_name}' non esiste in Qdrant. Esegui prima l'indicizzazione ('python app.py index').")
+            raise ValueError(f"La collezione '{target_collection}' non esiste in Qdrant.")
     
-    info = active_collections[collection_name]
+    info = active_collections[target_collection]
     vs = info["vector_store"]
     llm = OllamaLLM(base_url=OLLAMA_HOST, model=OLLAMA_MODEL)
-    
-    # Costruzione del filtro opzionale
+     
     qdrant_filter = None
     if source_filter:
         qdrant_filter = rest.Filter(
             must=[rest.FieldCondition(key="metadata.source", match=rest.MatchValue(value=source_filter))]
         )
     
-    # --- LOOP DI RICERCA E RIFORMULAZIONE (Max 2 tentativi) ---
     max_attempts = 2
     current_question = question
     final_answer = ""
@@ -314,19 +305,16 @@ def core_rag_ask(question: str, top_k: int = 4, source_filter: str = None) -> di
     for attempt in range(max_attempts):
         logger.info(f"Tentativo {attempt + 1}/{max_attempts} con query: '{current_question}'")
         
-        # 1. Retrieval
         results_with_score = vs.similarity_search_with_score(
             query=current_question, 
             k=top_k, 
             filter=qdrant_filter
         )
         
-        # Se non trova assolutamente nulla (es. filtro sbagliato), si ferma
         if not results_with_score:
             final_answer = "ASTENSIONE: Nessun documento recuperato dal database."
             break
 
-        # 2. Prepara il contesto e invoca l'LLM con il prompt rigido
         context = "\n---\n".join([
             f"[File: {doc.metadata.get('source', 'N/A')} | Pag: {doc.metadata.get('page', 0)}] {doc.page_content}" 
             for doc, _ in results_with_score
@@ -334,19 +322,14 @@ def core_rag_ask(question: str, top_k: int = 4, source_filter: str = None) -> di
         
         final_answer = llm.invoke(rag_prompt.format(context=context, question=current_question)).strip()
         
-        # 3. Controllo dell'Astensione
         if "ASTENSIONE:" not in final_answer:
-            # L'LLM ha trovato la risposta, usciamo dal loop!
             break
             
-        # l'LLM si è astenuto. Riformula la query se non è l'ultimo tentativo.
         if attempt < max_attempts - 1:
             logger.warning("Il modello si è astenuto. Riformulazione query in corso...")
             current_question = llm.invoke(rewrite_prompt.format(question=current_question)).strip()
-            # Rimuove eventuali virgolette aggiunte dall'LLM
             current_question = current_question.replace('"', '').replace("'", "")
     
-    # 4. POST-PROCESSING DELLE FONTI E FORMATTAZIONE
     sources = []
     total_score = 0
     if results_with_score:
@@ -364,9 +347,8 @@ def core_rag_ask(question: str, top_k: int = 4, source_filter: str = None) -> di
         avg_score = 0.0
         conf_level = "Bassa"
 
-    # Se dopo i tentativi l'LLM si astiene ancora, aggiusta la risposta per l'utente
     if "ASTENSIONE:" in final_answer:
-        final_answer = "Mi dispiace, ma le informazioni presenti nei documenti indicizzati non sono sufficienti per rispondere a questa domanda."
+        final_answer = "ASTENSIONE: Mi dispiace, ma le informazioni presenti nei documenti non sono sufficienti."
         conf_level = "Bassa (Astensione forzata)"
 
     log_to_terminal(question, final_answer, conf_level, sources)
