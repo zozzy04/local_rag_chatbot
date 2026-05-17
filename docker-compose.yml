@@ -1,0 +1,47 @@
+services:
+  rag:
+    build: .
+    container_name: rag_progetto
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app                      # Hot-reload del codice
+      - ./data/input:/app/data/input             
+      - ./data/results:/app/data/results
+    environment:
+      - OLLAMA_HOST=http://ollama:11434
+      - QDRANT_HOST=http://qdrant:6333
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    depends_on:
+      - qdrant
+      - ollama
+
+  # Database Vettoriale per i PDF
+  qdrant:
+    image: qdrant/qdrant
+    container_name: qdrant_db
+    ports:
+      - "6333:6333"
+    volumes:
+      - qdrant_data:/qdrant/storage
+
+  # Motore LLM e Embedding
+  ollama:
+    image: ollama/ollama
+    container_name: ollama_service
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    # # per utilizzare la GPU
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: 1
+    #           capabilities: [gpu]
+
+volumes:
+  qdrant_data:
+  ollama_data:

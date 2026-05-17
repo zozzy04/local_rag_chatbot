@@ -1,0 +1,18 @@
+# Registro dei peer per il retrieval federato — §7.4
+# Ogni gruppo configura qui le KB remote con cui vuole interoperare.
+# Le coppie di federazione vengono assegnate dal docente alla settimana 4.
+
+peers:
+  - id: groupB
+    name: "Team PincoPalla"
+    base_url: "http://localhost:8001"
+    api_key: "changeme"
+    enabled: false          # impostare true quando il peer è online
+    description: "Corpus su NLP e LLM"
+
+  - id: groupC
+    name: "Team NLP"
+    base_url: "http://localhost:8002"
+    api_key: "changeme"
+    enabled: false
+    description: "Corpus su Computer Vision"

@@ -1,0 +1,27 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+env/
+
+# Docker & Environment
+.env
+docker-compose.override.yml
+appunti.txt
+
+# IDE settings (VS Code, JetBrains)
+.vscode/
+.idea/
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Dati locali (non versionare)
+rag.db
+logs/
+data/input/
+
+# Cache pytest
+.pytest_cache/~$*
