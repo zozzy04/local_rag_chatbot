@@ -33,8 +33,7 @@ services:
       - "11434:11434"
     volumes:
       - ollama_data:/root/.ollama
-
-# Configurazione Ollama per usare GPU NVIDIA scommentare se necessario
+    # # per utilizzare la GPU
     # deploy:
     #   resources:
     #     reservations:

@@ -1,139 +1,321 @@
-# Sistema RAG Offline Completo (FastAPI + LangChain + Ollama + Qdrant)
+# Sistema RAG su PDF — Progetto GenAI
 
-Questo repository contiene un'implementazione avanzata di un sistema RAG (Retrieval-Augmented Generation) completamente offline. Il progetto sfrutta **Ollama** per l'esecuzione locale di Large Language Models (LLMs) ed Embeddings, **Qdrant** come vector database e **FastAPI** come backend server, uniti dalla logica orchestrata da **LangChain**.
+Sistema **Retrieval-Augmented Generation** offline che indicizza PDF aziendali e risponde a domande in linguaggio naturale citando le fonti, con persistenza relazionale completa e interoperabilità federata tra knowledge base di gruppi distinti.
 
-Il sistema è progettato per garantire robustezza, riducendo le allucinazioni tramite *guardrails* molto rigidi, consentendo la valutazione sistematica con framework come *RAGAS* e fornendo interfacce sia tramite CLI (Command Line Interface) che tramite API REST.
-
----
-
-## 🌟 Architettura e Funzionalità Principali
-
-### 1. Ingestion Intelligente
-- **Chunking Configurabile**: I documenti in ingresso (PDF) vengono suddivisi in *chunk* tramite parametri configurabili (`app/config.yaml`). Sono disponibili tre preset: `SMALL`, `MEDIUM`, `LARGE` per testare la granularità.
-- **Caching basato su Hash (SHA-256)**: Il sistema calcola l'hash dei file in fase di ingestion per evitare la ri-elaborazione degli stessi file già presenti in Qdrant, ottimizzando i tempi di caricamento.
-- **Metadati Ricchi**: Ad ogni *chunk* vengono associati nome del file, numero di pagina e hash.
-
-### 2. Recupero e Generazione (RAG Engine)
-- **Top-K Dinamico e Filtraggio**: Possibilità di definire quanti frammenti recuperare (`-k`) e l'opzione di limitare la ricerca a un singolo documento target (`--source`).
-- **Guardrails e Prompting Rigoroso**: Prompt progettati per:
-  - **Risposte Closed-Book**: Basare le risposte ESCLUSIVAMENTE sui documenti.
-  - **Citazioni Obbligatorie**: Riportare la fonte (file e pagina) all'interno del testo generato.
-  - **Astensione Controllata**: Se il contesto non supporta la domanda (out-of-scope), il sistema deve restituire una stringa esatta di "ASTENSIONE: ...".
-- **Self-Correction & Query Rewriting**: Se il modello si astiene, un layer intermedio esegue un *query rewriting* per riformulare la domanda iniziale dell'utente (usando sinonimi o generalizzazioni) e tenta un secondo passaggio di retrieval per aumentare la probabilità di successo.
-
-### 3. API REST e Lifespan FastAPI
-- Server asincrono che inizializza la base di dati all'avvio garantendo l'accessibilità immediata delle risorse.
-- **Endpoint `/ask`**: Per fare domande (con parametri per k e filtro sorgente).
-- **Endpoint `/reindex`**: Lancia l'indicizzazione in un *background task* asincrono, evitando blocchi per gli altri client web connessi.
-
-### 4. Framework di Valutazione (Evaluation & Experiments)
-Il sistema prevede script dedicati alla misurazione dell'accuratezza tramite un *golden dataset* di test (`evaluation/golden_dataset.json`).
-- **`evaluate.py`**:
-  - Calcola *metriche manuali di retrieval*: MRR (Mean Reciprocal Rank), Hit Rate, e Recall.
-  - Valuta *metriche di comportamento*: Correct Abstention Rate (per domande out-of-scope) e Hallucination Rate.
-  - Integra **RAGAS** per misurare le performance puramente LLM (Faithfulness, Answer Correctness) usando il modello locale come giudice.
-- **`experiments.py`**:
-  - Esegue una matrice di test esaustiva confrontando:
-    - **Strategie di Chunking** (SMALL, MEDIUM, LARGE)
-    - **Modelli di Embedding** (es. *nomic-embed-text*, *mxbai-embed-large*)
-    - **Valori di Top-K** (3, 5, 10)
-  - Mantiene gli esperimenti in collezioni Qdrant temporanee/separate, isolate da quella di produzione.
-  - Esporta i risultati globali in CSV (`data/results/`) e genera Heatmaps grafiche per Recall e MRR per giustificare la scelta dei parametri migliori.
+**Caso d'uso:** Studio professionale IT/Cloud che vuole interrogare manuali tecnici (AI Agents, AI as a Service, AI for Everyday IT) in modo tracciabile, auditabile e federato con i sistemi di altri team.
 
 ---
 
-## 🛠 Setup e Configurazione
+## Architettura
 
-1. Clonare il repository.
-2. Predisporre i modelli base di **Ollama** che si intendono utilizzare (default: `mistral` per la generazione, `nomic-embed-text` per gli embeddings).
-3. Configurare le variabili d'ambiente nel file `.env` (si può prendere come base `.env.example`).
-4. Installare le dipendenze Python tramite `pip install -r requirements.txt` (o usare Docker Compose).
-
-Parametri di base `.env`:
-```env
-OLLAMA_HOST=http://localhost:11434
-QDRANT_HOST=http://localhost:6333
-OLLAMA_MODEL=mistral
-EMBEDDING_MODEL=nomic-embed-text
-COLLECTION_NAME=default_collection
-SOURCE_DIR=data/input
+```
+┌──────────────────────────────────────────────────────────┐
+│  CLI (app.py)                                            │
+│  index | ask | serve | db init/history/export/analyze   │
+└────────────┬─────────────────────────────────────────────┘
+             │
+    ┌────────▼────────┐          ┌─────────────────────┐
+    │  app/main.py    │          │  api/server.py       │
+    │  core_rag_ask() │◄────────►│  FastAPI (spec v1.0) │
+    │  ingest_docs()  │          │  /health /info       │
+    └───┬────────┬────┘          │  /documents          │
+        │        │               │  /retrieve /ask      │
+   ┌────▼──┐  ┌──▼──────────┐   └──────────┬───────────┘
+   │Qdrant │  │ SQLAlchemy  │              │
+   │Vector │  │ SQLite DB   │    ┌──────────▼──────────┐
+   │Store  │  │ (Alembic)   │    │  api/federation.py   │
+   └───────┘  └─────────────┘    │  RRF peer retrieval  │
+                                 └─────────────────────┘
+    ┌─────────────────────────────────┐
+    │  app/extensions/               │
+    │  multi_query | hybrid_search   │
+    │  query_cache | self_correction │
+    │  structured_logger             │
+    └─────────────────────────────────┘
 ```
 
-*(Nota: in un contesto Dockerizzato tramite `docker-compose`, i nomi degli host corrisponderanno ai nomi dei servizi, ad esempio `http://ollama:11434` e `http://qdrant:6333`).*
-
 ---
 
-## 💻 Interfaccia a Linea di Comando (CLI)
+## Setup rapido
 
-Il file `app.py` funge da punto d'ingresso principale in ambiente CLI.
-
-### Indicizzare i Documenti (Ingestion)
-I documenti inseriti nella cartella `data/input` (o quella configurata in `.env`) verranno passati nel database vettoriale.
+### 1. Variabili d'ambiente
 
 ```bash
-# Usa il preset di chunking di default (MEDIUM)
-python app.py index
+cp .env.example .env
+# Configura: GROUP_ID, GROUP_NAME, API_KEY, DATABASE_URL
+```
 
-# Usa un preset di chunking specifico
-python app.py index --preset SMALL
+### 2. Dipendenze Python
+
+```bash
+pip install -r requirements.txt
+pip install alembic slowapi rank_bm25
+```
+
+### 3. Avvio servizi (Docker)
+
+```bash
+docker-compose up -d   # avvia Ollama + Qdrant
+```
+
+### 4. Inizializza il DB
+
+```bash
+python app.py db init
+# Esegue le migrazioni Alembic + crea il record del gruppo locale
+```
+
+### 5. Indicizza i PDF
+
+```bash
+# Metti i PDF in data/input/
+python app.py index               # preset MEDIUM (default)
 python app.py index --preset LARGE
 ```
 
-### Interrogare il RAG (Ask)
-Lancia l'interrogazione completa sulla base di dati indicizzata.
+---
+
+## Comandi CLI
+
+### Interrogazione locale
 
 ```bash
-# Domanda semplice (Top-K default = 4)
-python app.py ask "Quali sono i concetti chiave dell'AI?"
-
-# Domanda specificando Top-K a 10
-python app.py ask "Quali sono i concetti chiave dell'AI?" -k 10
-
-# Domanda filtrata su un documento specifico
-python app.py ask "Cosa si dice di X?" --source "Documento_Target.pdf"
+python app.py ask "Cosa sono gli agenti AI?"
+python app.py ask "Cos'è AWS Polly?" --source AI_as_a_Service.pdf
+python app.py ask "Spiega i token" -k 8
 ```
-Il terminale risponderà con una formattazione chiara divisa in `[RISPOSTA]`, `[FONTI]`, `[CONFIDENZA]` e `[MOTIVAZIONE]`.
+
+### Con estensioni avanzate (paragrafo 5)
+
+```bash
+python app.py ask "Domanda..." --multi-query      # Multi-query expansion
+python app.py ask "Domanda..." --hybrid           # Hybrid BM25+dense search
+python app.py ask "Domanda..." --cache            # Semantic query cache
+python app.py ask "Domanda..." --self-correct     # Self-correction loop
+python app.py ask "Domanda..." --multi-query --hybrid --self-correct
+```
+
+### Interrogazione federata (paragrafo 7)
+
+```bash
+python app.py ask "Domanda cross-group" --federated
+python app.py ask "Domanda..." --remote groupB,groupC
+```
+
+### Server API federata
+
+```bash
+python app.py serve               # http://0.0.0.0:8000
+python app.py serve --port 8001   # porta custom
+# Docs interattive: http://localhost:8000/docs
+```
+
+### Gestione DB (paragrafo 6)
+
+```bash
+python app.py db init
+python app.py db history --last 50
+python app.py db export --format csv
+python app.py db analyze          # 3 query analitiche paragrafo 6.2
+```
 
 ---
 
-## 🌐 Utilizzo API REST (FastAPI)
+## API REST (paragrafo 7.2)
 
-Avviando il server FastAPI (es. tramite uvicorn o Docker Compose), l'app espone un server che permette l'integrazione con eventuali frontend o microservizi.
+Header obbligatori (eccetto `/health`):
 
-**1. Risposta del RAG (`POST /ask`)**
-Parametri Form Data:
-- `question` (string): La domanda da porre.
-- `k` (int, opzionale, default 4): Quanti chunk recuperare.
-- `source` (string, opzionale): Filtro per limitare a un singolo documento target.
+```
+X-API-Key: <valore da .env>
+X-API-Version: 1.0
+X-Group-Id: <id del gruppo chiamante>
+```
 
-**2. Re-indicizzazione asincrona (`POST /reindex`)**
-Non accetta parametri. Avvia l'ingestion in un thread secondario, scansionando nuovamente la directory `SOURCE_DIR` per nuovi PDF non ancora indicizzati (grazie al controllo su hash).
+| Metodo | Endpoint     | Descrizione                                      |
+|--------|--------------|--------------------------------------------------|
+| GET    | `/health`    | Liveness check (no auth, < 100ms)               |
+| GET    | `/info`      | Metadata KB: n_docs, n_chunks, modello embedding |
+| GET    | `/documents` | Lista PDF indicizzati                            |
+| POST   | `/retrieve`  | Top-k chunks senza LLM (timeout 5s)             |
+| POST   | `/ask`       | Risposta completa con citazioni (timeout 30s)    |
+
+Esempio:
+```bash
+curl -X POST http://localhost:8000/retrieve \
+  -H "X-API-Key: changeme" -H "X-API-Version: 1.0" -H "X-Group-Id: groupB" \
+  -H "Content-Type: application/json" \
+  -d '{"question": "Cos'\''e un agente AI?", "k": 5}'
+```
 
 ---
 
-## 📊 Sistema di Valutazione (Evaluation)
+## Federazione multi-KB (paragrafo 7)
 
-Per testare e provare statisticamente le performance del sistema RAG, spostarsi nella root e lanciare gli script dedicati all'interno di `evaluation/`. I test si basano su un set di query in `evaluation/golden_dataset.json`.
+### Configurazione
 
-**1. Valutazione standard (`evaluate.py`)**
-Effettua un run con i parametri attuali (k=4) sul dataset e genera report CSV (`report_metriche_manuali.csv` e `report_metriche_ragas.csv`). Mostra a schermo statistiche globali su MRR, Hit Rate, Recall e Astensioni corrette.
-```bash
-python evaluation/evaluate.py
+```yaml
+# peers.yaml
+peers:
+  - id: groupB
+    name: "Team Altro"
+    base_url: "http://<ip-groupB>:8001"
+    api_key: "chiave-condivisa"
+    enabled: true
 ```
 
-**2. Matrice degli Esperimenti (`experiments.py`)**
-Esegue tutte le permutazioni dei parametri configurabili per trovare l'impostazione RAG "ottimale" (Hyperparameter tuning). Questa operazione è onerosa a livello computazionale (richiederà svariati minuti/ore in base all'hardware).
+### Avvio
+
 ```bash
-python evaluation/experiments.py
+python app.py serve --port 8000   # espone la KB locale
+python app.py ask "Domanda" --federated
 ```
-I risultati finali (comprese le *Heatmap* visuali per un confronto immediato di MRR e Recall al variare del parametro *K* e della strategia di *Chunking*) verranno salvati nella cartella `data/results/`.
+
+### Strategia di fusion: Reciprocal Rank Fusion (RRF)
+
+RRF combina i ranking di gruppi con embedding diversi senza richiedere che gli score siano comparabili. Formula: `score(d) = sum(1 / (k + rank(d, group)))` per k=60. Robusto alle differenze di scala tra modelli di embedding distinti.
+
+### Resilienza
+
+- Timeout configurabile: `FEDERATION_TIMEOUT_S=5` in `.env`
+- Peer offline: la query prosegue con KB disponibili + warning nella risposta
+- Ogni risposta federata salva `remote_group_id` nel DB per auditabilità
 
 ---
 
-## 🔒 Sicurezza e Robustezza
+## Estensioni implementate (paragrafo 5)
 
-Il sistema prevede un approccio di tipo "**Strict Grounding**".
-Il prompt (visibile in `app/prompt.py`) forza severamente le limitazioni, ma l'intero layer logico in `core_rag_ask` supervisiona la coerenza dell'output:
-- Se il database vettoriale restituisce un livello di confidenza basso, un sistema euristico lo classifica e avverte l'utente.
-- Se la risposta del modello non supera i test di pertinenza e include "ASTENSIONE:", subentra un *fall-back* sicuro con astensione rigida limitando allucinazioni (es. risposte a domande *out-of-scope* non inerenti ai documenti testati).
-- Un sistema di self-correction (tramite **query rewriting** basato su LLM) cerca di mitigare il problema se la prima query vettoriale era malformata o troppo stringente, dando un *seconda chance* tramite sinonimizzazione prima di arrendersi all'astensione globale.
+| # | Estensione | Flag CLI | Impatto atteso |
+|---|------------|----------|----------------|
+| 2 | **Hybrid Search** BM25+dense+RRF | `--hybrid` | +Recall su termini tecnici esatti |
+| 3 | **Multi-Query Expansion** | `--multi-query` | +Recall su query ambigue |
+| 7 | **Structured Logging** JSON | sempre attivo | Osservabilità e auditabilita completa |
+| 8 | **Query Cache** semantica (cosine threshold 0.95) | `--cache` | -Latenza su query ripetute |
+| 9 | **Self-Correction Loop** | `--self-correct` | +Faithfulness |
+
+Valutazione delta metriche:
+```bash
+python evaluation/evaluate_extensions.py
+# Output: evaluation/results_extensions.csv + bar_extensions_delta.png
+```
+
+---
+
+## Scelte tecniche motivate
+
+**Vector Store: Qdrant (non Chroma)**
+Qdrant è stato scelto per la sua architettura a microservizi Docker-ready, il supporto a payload filtering (usato per `source_filter` e `file_hash`), le performance di produzione e l'API Python stabile. Offre le stesse garanzie di Chroma con maggiore scalabilita orizzontale.
+
+**Embedding: nomic-embed-text (768d) vs mxbai-embed-large (1024d)**
+Entrambi testati sperimentalmente. Nomic e piu veloce e compatto; mxbai ha performance superiori su testi tecnici in inglese. La configurazione vincente emerge dall'esperimento di confronto (vedere `evaluation/esperimento_confronto_finale.csv`).
+
+**Chunking: RecursiveCharacterTextSplitter**
+Configurabile via `app/config.yaml`. MEDIUM (1000/200) e il preset vincente nel confronto, bilanciando contesto sufficiente e precisione di citazione.
+
+**DB: SQLite + SQLAlchemy 2.0 + Alembic**
+SQLite per semplicita di deploy (zero server aggiuntivi). Alembic per migrazioni versionabili. Lo schema relazionale supporta auditabilita completa: chi ha chiesto cosa, quando, con quali fonti, con quale latenza.
+
+---
+
+## Valutazione (paragrafo 4)
+
+```bash
+cd evaluation
+
+# Baseline
+python evaluate.py
+
+# Matrice chunking x embedding x k
+python experiments.py
+
+# Grafici
+python visualization.py
+
+# Delta estensioni paragrafo 5
+python evaluate_extensions.py
+```
+
+Golden dataset: `evaluation/golden_dataset.json` — 35 domande: 8 fattuali singola, 6 multi-chunk, 4 multi-hop, 3 sintesi, 5 out-of-scope, 2 ambigue, 2 edge case, **5 cross-group federati**.
+
+**Risultati baseline (MEDIUM + nomic-embed-text + k=4):**
+
+| Metrica | Valore |
+|--------|--------|
+| MRR | 0.525 |
+| HitRate@4 | 0.733 |
+| Recall@4 | 0.733 |
+| Astensioni corrette (out-of-scope) | 5/5 — 100% |
+
+---
+
+## Test
+
+```bash
+python -m pytest tests/ -v
+# 39 test: test_metrics.py | test_db.py | test_api.py
+```
+
+---
+
+## Struttura progetto
+
+```
+├── app.py                        # CLI entry point
+├── app/
+│   ├── main.py                   # Core RAG: ingest + ask + estensioni
+│   ├── prompt.py                 # Prompt + guardrail
+│   ├── config.yaml               # Chunking presets SMALL/MEDIUM/LARGE
+│   └── extensions/               # Estensioni paragrafo 5
+│       ├── multi_query.py        # #3 Multi-query expansion
+│       ├── hybrid_search.py      # #2 BM25+dense+RRF
+│       ├── query_cache.py        # #8 Semantic cache
+│       ├── structured_logger.py  # #7 JSON logging
+│       └── self_correction.py    # #9 Self-correction
+├── api/
+│   ├── server.py                 # FastAPI conforme a api_spec.yaml
+│   └── federation.py             # RRF federated retrieval
+├── db/
+│   ├── models.py                 # SQLAlchemy ORM (9 tabelle)
+│   ├── database.py               # Engine + session context manager
+│   ├── analytics.py              # 3 query analitiche paragrafo 6.2
+│   └── migrations/versions/001_initial_schema.py
+├── evaluation/
+│   ├── golden_dataset.json       # 35 domande (5 cross-group)
+│   ├── evaluate.py               # Metriche baseline
+│   ├── evaluate_extensions.py    # Delta metriche estensioni
+│   ├── experiments.py            # Matrice esperimenti
+│   └── visualization.py
+├── tests/
+│   ├── test_metrics.py           # Recall@k, MRR, HitRate, RRF
+│   ├── test_db.py                # CRUD + cascade + transazioni
+│   └── test_api.py               # Tutti gli endpoint + federation
+├── data/input/                   # PDF sorgente
+├── logs/rag_logs.jsonl           # Structured logging
+├── peers.yaml                    # Peer federation
+├── alembic.ini                   # Alembic
+└── .env.example                  # Template env
+```
+
+---
+
+## Formato risposta (paragrafo 3.5)
+
+```
+============================================================
+[RISPOSTA]
+Il testo della risposta diretta basata solo sui documenti.
+
+[FONTI]
+- file: AI_Agents_in_Action.pdf, pag: 42, score: 0.891
+  estratto: "I cinque componenti principali di un agente..."
+
+[CONFIDENZA] Alta (Forte corrispondenza)
+[MOTIVAZIONE] Punteggio medio vettoriale: 0.86.
+============================================================
+```
+
+Se l'informazione non e nei documenti:
+```
+[RISPOSTA]
+ASTENSIONE: Le informazioni presenti nei documenti non sono sufficienti per rispondere.
+[CONFIDENZA] Bassa (Astensione forzata)
+```

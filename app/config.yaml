@@ -4,10 +4,10 @@ chunking_presets:
     chunk_overlap: 80
     separators: ["\n\n", "\n", ".", " "]
   MEDIUM:
-    chunk_size: 1000
+    chunk_size: 800
     chunk_overlap: 200
     separators: ["\n\n", "\n", ".", " "]
   LARGE:
-    chunk_size: 2000
+    chunk_size: 1200
     chunk_overlap: 300
     separators: ["\n\n", "\n", ".", " "]

@@ -1,4 +1,7 @@
 import json
+import os
+import sys
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import pandas as pd
 from typing import List, Union
 import logging
@@ -17,15 +20,16 @@ from langchain_ollama import ChatOllama, OllamaEmbeddings
 # Importa le tue funzioni core dal modulo app
 try:
     from app.main import core_rag_ask
-except ImportError:
-    print("Assicurati di lanciare lo script dalla root del progetto (dove si trova app/).")
+except ImportError as _e:
+    print(f"ImportError: {_e}")
+    import traceback; traceback.print_exc()
     exit(1)
 
 logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')
 
 # --- Configurazione Modelli per RAGAS ---
-OLLAMA_URL = "http://ollama:11434" 
-RAGAS_EVAL_MODEL = "mistral"          
+OLLAMA_URL = "http://localhost:11434"
+RAGAS_EVAL_MODEL = "llama3.2"
 RAGAS_EMBEDDING_MODEL = "nomic-embed-text"
 
 # Inizializza i modelli standard Langchain
@@ -121,7 +125,7 @@ def run_evaluation(k_value: int = 4):
     logging.info(f"Avvio valutazione con k={k_value}...")
     
     # Carica il Golden Dataset corretto (che ora dovrebbe avere expected_file)
-    with open("golden_dataset.json", "r", encoding="utf-8") as f:
+    with open("evaluation/golden_dataset.json", "r", encoding="utf-8") as f:
         dataset = json.load(f)
         
     risultati_manuali = []
@@ -195,9 +199,9 @@ def run_evaluation(k_value: int = 4):
     # 5. SALVATAGGIO E REPORT
     # ==========================================
     df_manuale = pd.DataFrame(risultati_manuali)
-    df_manuale.to_csv("report_metriche_manuali.csv", index=False)
+    df_manuale.to_csv("evaluation/report_metriche_manuali.csv", index=False)
     if not df_ragas.empty:
-        df_ragas.to_csv("report_metriche_ragas.csv", index=False)
+        df_ragas.to_csv("evaluation/report_metriche_ragas.csv", index=False)
         
     logging.info("--- SOMMARIO METRICHE MANUALI ---")
     logging.info(f"MRR Medio: {df_manuale['MRR'].mean():.2f}")

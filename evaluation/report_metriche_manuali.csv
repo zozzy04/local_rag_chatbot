@@ -1,0 +1,36 @@
+id,categoria,MRR,Hit_Rate,Recall,correct_abstention,hallucination,latency_ms,confidence,is_abstention
+1,Fattuale (Singola),1.0,1.0,1.0,,,302922,Media (Corrispondenza parziale),False
+2,Fattuale (Singola),1.0,1.0,1.0,,,246775,Media (Corrispondenza parziale),False
+3,Fattuale (Singola),0.5,1.0,1.0,,,197893,Bassa (Astensione forzata),True
+4,Fattuale (Singola),1.0,1.0,1.0,,,481026,Media (Corrispondenza parziale),False
+5,Fattuale (Singola),0.5,1.0,1.0,,,209031,Bassa (Astensione forzata),True
+6,Fattuale (Singola),0.25,1.0,1.0,,,203794,Bassa (Astensione forzata),True
+7,Fattuale (Singola),0.5,1.0,1.0,,,392574,Media (Corrispondenza parziale),False
+8,Fattuale (Singola),1.0,1.0,1.0,,,170265,Media (Corrispondenza parziale),False
+9,Fattuale (Multi-chunk),0.5,1.0,1.0,,,207365,Bassa (Astensione forzata),True
+10,Fattuale (Multi-chunk),0.333,1.0,1.0,,,270708,Bassa (Astensione forzata),True
+11,Fattuale (Multi-chunk),1.0,1.0,1.0,,,289392,Bassa (Astensione forzata),True
+12,Fattuale (Multi-chunk),0.333,1.0,1.0,,,245903,Bassa (Astensione forzata),True
+13,Fattuale (Multi-chunk),0.333,1.0,1.0,,,278460,Bassa (Astensione forzata),True
+14,Fattuale (Multi-chunk),1.0,1.0,1.0,,,241986,Bassa (Astensione forzata),True
+15,Multi-hop,0.0,0.0,0.0,,,277696,Bassa (Astensione forzata),True
+16,Multi-hop,0.0,0.0,0.0,,,439939,Bassa (Astensione forzata),True
+17,Multi-hop,0.0,0.0,0.0,,,413837,Bassa (Astensione forzata),True
+18,Multi-hop,0.0,0.0,0.0,,,247612,Bassa (Astensione forzata),True
+19,Sintesi/Confronto,0.0,0.0,0.0,,,503215,Bassa (Astensione forzata),True
+20,Sintesi/Confronto,0.0,0.0,0.0,,,328450,Media (Corrispondenza parziale),False
+21,Sintesi/Confronto,1.0,1.0,1.0,,,604934,Bassa (Astensione forzata),True
+22,Out-of-scope,,,,1.0,0.0,352474,Bassa (Astensione forzata),True
+23,Out-of-scope,,,,1.0,0.0,688779,Bassa (Astensione forzata),True
+24,Out-of-scope,,,,1.0,0.0,750411,Bassa (Astensione forzata),True
+25,Out-of-scope (Subdola),,,,1.0,0.0,388537,Bassa (Astensione forzata),True
+26,Out-of-scope (Subdola),,,,1.0,0.0,255602,Bassa (Astensione forzata),True
+27,Ambigua,0.5,1.0,1.0,,,314997,Media (Corrispondenza parziale),False
+28,Ambigua,0.0,0.0,0.0,,,348734,Bassa (Astensione forzata),True
+29,Edge case,0.5,1.0,1.0,,,211999,Bassa (Astensione forzata),True
+30,Edge case,1.0,1.0,1.0,,,438253,Bassa (Astensione forzata),True
+31,federated,1.0,1.0,1.0,,,340383,Bassa (Astensione forzata),True
+32,federated,1.0,1.0,1.0,,,340618,Bassa (Astensione forzata),True
+33,federated,0.5,1.0,1.0,,,264537,Bassa (Astensione forzata),True
+34,federated,1.0,1.0,1.0,,,332439,Bassa (Astensione forzata),True
+35,federated,0.0,0.0,0.0,,,346737,Bassa (Astensione forzata),True

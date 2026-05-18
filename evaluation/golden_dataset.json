@@ -203,5 +203,50 @@
         "domanda": "Secondo la tabella comparativa dei limiti dei token fornita nel testo, qual è esattamente il limite massimo di token in output supportato dal modello 'OpenAI o3-mini'?",
         "expected_file": "AI_for_Everyday_IT.pdf",
         "ground_truth": "Secondo la tabella comparativa, il limite massimo in output supportato da OpenAI o3-mini è di 100K (100.000) token."
+    },
+    {
+        "id": 31,
+        "categoria": "federated",
+        "domanda": "Come si integra un sistema RAG basato su agenti AI (come descritto nel nostro corpus su 'AI Agents in Action') con un modello di deep learning per la classificazione delle immagini sviluppato con PyTorch o TensorFlow?",
+        "expected_file": "AI_Agents_in_Action.pdf",
+        "requires_groups": ["groupB"],
+        "ground_truth": "La risposta completa richiede conoscenze sia sul corpus locale (architettura agenti RAG) sia su deep learning frameworks (PyTorch/TensorFlow) presumibilmente presenti nella KB del gruppo B. Il sistema locale può rispondere sulla parte agenti, ma la parte DL è fuori dal nostro corpus.",
+        "note": "Domanda cross-group: metà risposta è nel nostro corpus (Agents), metà nel corpus groupB (DL/CV)."
+    },
+    {
+        "id": 32,
+        "categoria": "federated",
+        "domanda": "Qual è la differenza tra un modello linguistico di grandi dimensioni (LLM) utilizzato per il ragionamento degli agenti AI (trattato nel nostro corpus) e una rete neurale ricorrente (RNN/LSTM) usata per la time-series forecasting?",
+        "expected_file": "AI_Agents_in_Action.pdf",
+        "requires_groups": ["groupB"],
+        "ground_truth": "Il nostro corpus spiega gli LLM nel contesto degli agenti AI. I dettagli su RNN/LSTM per time-series sono nel corpus del gruppo B. La risposta federata integra entrambe le prospettive.",
+        "note": "Cross-group: confronto LLM (locale) vs RNN/LSTM (groupB)."
+    },
+    {
+        "id": 33,
+        "categoria": "federated",
+        "domanda": "Come si può usare AWS Rekognition (descritto nel nostro corpus AI as a Service) insieme a un modello YOLO custom (presumibilmente nel corpus di un altro gruppo) per un sistema di sorveglianza industriale?",
+        "expected_file": "AI_as_a_Service.pdf",
+        "requires_groups": ["groupB"],
+        "ground_truth": "Il nostro corpus copre AWS Rekognition e l'architettura serverless. Un sistema YOLO custom è descritto nel corpus del gruppo B (Computer Vision). La risposta federata combina le due knowledge base.",
+        "note": "Cross-group: AWS Rekognition (locale) + YOLO custom (groupB)."
+    },
+    {
+        "id": 34,
+        "categoria": "federated",
+        "domanda": "Quali tecniche di prompt engineering per LLM (trattate nel nostro corpus) si applicano meglio quando si desidera far ragionare un modello su output di reti convoluzionali (CNN) descritte nel corpus di un altro gruppo?",
+        "expected_file": "AI_for_Everyday_IT.pdf",
+        "requires_groups": ["groupB"],
+        "ground_truth": "Il nostro corpus copre zero-shot, few-shot e chain-of-thought prompting. Le CNN e il loro output sono argomento del corpus groupB. La risposta federata mostra come combinare queste tecniche.",
+        "note": "Cross-group: prompting LLM (locale) + CNN output interpretation (groupB)."
+    },
+    {
+        "id": 35,
+        "categoria": "federated",
+        "domanda": "In un sistema di AI enterprise che usa sia agenti AI serverless (come descritto nel nostro corpus) sia modelli di NLP per l'analisi del sentiment (presumibilmente nel corpus del gruppo B), come si gestisce la latenza end-to-end e il costo totale?",
+        "expected_file": "AI_as_a_Service.pdf, AI_Agents_in_Action.pdf",
+        "requires_groups": ["groupB"],
+        "ground_truth": "Il nostro corpus descrive la latenza e il costo dei sistemi agentici serverless su AWS. L'analisi del sentiment e la latenza dei modelli NLP sono nel corpus groupB. La risposta federata fornisce una stima completa del costo e latenza del sistema integrato.",
+        "note": "Cross-group: serverless AI cost/latency (locale) + NLP sentiment latency (groupB)."
     }
 ]

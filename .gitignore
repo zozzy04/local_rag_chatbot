@@ -17,3 +17,11 @@ appunti.txt
 # OS generated files
 .DS_Store
 Thumbs.db
+
+# Dati locali (non versionare)
+rag.db
+logs/
+data/input/
+
+# Cache pytest
+.pytest_cache/~$*

@@ -23,6 +23,7 @@ from evaluate import (
 from ragas import evaluate as ragas_evaluate
 from ragas.run_config import RunConfig
 from app.main import ingest_local_documents, core_rag_ask
+from visualization import generate_charts
 
 logging.basicConfig(level=logging.INFO)
 
@@ -138,17 +139,6 @@ def run_matrix_experiment():
     
     # Genera grafici
     generate_charts(master_df)
-
-def generate_charts(df):
-    # Generiamo una Heatmap per la Recall e una per l'MRR
-    for metric, filename in [('Avg_Recall', 'heatmap_recall.png'), ('Avg_MRR', 'heatmap_mrr.png')]:
-        plt.figure(figsize=(10, 6))
-        pivot = df.pivot_table(index='Strategy', columns='K', values=metric, aggfunc='mean')
-        sns.heatmap(pivot, annot=True, cmap="YlGnBu", fmt=".2f")
-        plt.title(f"Analisi {metric}: Chunking vs K")
-        # Salvataggio delle immagini nella cartella 'data/results'
-        plt.savefig(f"data/results/{filename}")
-        logging.info(f"Grafico generato e salvato in data/results/{filename}")
 
 if __name__ == "__main__":
     run_matrix_experiment()
